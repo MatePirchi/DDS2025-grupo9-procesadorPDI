@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tpdds
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tpdds"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - tpnet
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: "prod,postgres"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: tpdds
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      # Tu variable propia del módulo Solicitudes:
+      URL_SOLICITUDES: "https://two025-tp-entrega-2-jenniferfabflores.onrender.com/"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - tpnet
+
+volumes:
+  db_data:
+
+networks:
+  tpnet:
