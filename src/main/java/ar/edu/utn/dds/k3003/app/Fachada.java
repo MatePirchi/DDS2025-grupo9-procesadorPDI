@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 public class Fachada implements FachadaProcesadorPDI {
 
@@ -53,9 +52,7 @@ public class Fachada implements FachadaProcesadorPDI {
         boolean activo;
 
         try {
-            log.info("[ProcesadorPdI] Consultando Solicitudes.estaActivo(hechoId={})...", hechoId);
             activo = fachadaSolicitudes.estaActivo(hechoId);
-            log.info("[ProcesadorPdI] Solicitudes.estaActivo({}) -> {}", hechoId, activo);
 
         } catch (java.util.NoSuchElementException e) {
             // El proxy tira esto si no hay solicitud para ese ID
@@ -75,7 +72,6 @@ public class Fachada implements FachadaProcesadorPDI {
         PdI nuevoPdI = recibirPdIDTO(pdiDTORecibido);
         System.out.println("ProcesadorPdI.Fachada.procesar() mapeado a entidad: " + nuevoPdI);
 
-        // Buscar duplicado a mano
         Optional<PdI> yaProcesado =
                 pdiRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
                         .filter(

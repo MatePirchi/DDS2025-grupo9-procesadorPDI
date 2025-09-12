@@ -11,17 +11,17 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MetricsConfig {
-
+/*
     @Bean
     public DatadogConfig datadogConfig(
-            @Value("${management.datadog.metrics.export.apiKey}") String apiKey,
-            @Value("${management.datadog.metrics.export.uri:https://api.datadoghq.com}") String uri,
-            @Value("${management.datadog.metrics.export.step:30s}") String step) {
+            @Value("${management.metrics.export.datadog.api-key}") String apiKey,
+            @Value("${management.metrics.export.datadog.uri:https://api.datadoghq.com}") String uri,
+            @Value("${management.metrics.export.datadog.step:PT30S}") java.time.Duration step) {
         return new DatadogConfig() {
             @Override public String apiKey() { return apiKey; }
             @Override public String uri() { return uri; }
             @Override public String get(String k) { return null; }
-            @Override public java.time.Duration step() { return java.time.Duration.parse("PT" + step.toUpperCase()); }
+            @Override public java.time.Duration step() { return step; }
         };
     }
 
@@ -36,4 +36,6 @@ public class MetricsConfig {
         new FileDescriptorMetrics().bindTo(registry);
         return registry;
     }
+
+ */
 }

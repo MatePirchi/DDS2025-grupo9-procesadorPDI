@@ -76,8 +76,8 @@ public class PdIController {
     }
 
 
-    // DELETE /api/pdis/purge
-    @DeleteMapping("/purge")
+    // DELETE /api/pdis/delete
+    @DeleteMapping("/delete")
     public ResponseEntity<Void> borrarTodo() {
         fachadaProcesadorPdI.borrarTodo();
         return ResponseEntity.noContent().build();
