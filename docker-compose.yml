@@ -32,8 +32,6 @@ services:
       DB_NAME: tpdds
       DB_USER: postgres
       DB_PASSWORD: postgres
-      # Tu variable propia del módulo Solicitudes:
-      URL_SOLICITUDES: "https://two025-tp-entrega-2-jenniferfabflores.onrender.com/"
     ports:
       - "8080:8080"
     restart: unless-stopped

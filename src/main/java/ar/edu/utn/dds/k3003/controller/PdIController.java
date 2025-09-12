@@ -1,11 +1,9 @@
 package ar.edu.utn.dds.k3003.controller;
 
-import ar.edu.utn.dds.k3003.controller.dtos.ProcesamientoResponseDTO;
+
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
-import ar.edu.utn.dds.k3003.controller.dtos.PdIRequestDTO;
-import ar.edu.utn.dds.k3003.controller.dtos.PdIResponseDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,28 +23,26 @@ public class PdIController {
         this.fachadaProcesadorPdI = fachadaProcesadorPdI;
     }
 
-    // GET /api/pdis?hecho={hechoId}
-    // GET /api/pdis
     @GetMapping
-    public ResponseEntity<List<PdIResponseDTO>> listarPdisPorHecho(
+    public ResponseEntity<List<PdIDTO>> listarPdisPorHecho(
             @RequestParam(name = "hecho", required = false) String hechoId) {
 
         List<PdIDTO> lista = (hechoId != null)
                 ? fachadaProcesadorPdI.buscarPorHecho(hechoId)
                 : fachadaProcesadorPdI.pdis();
 
-        return ResponseEntity.ok(lista.stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(lista);
     }
 
     // GET /api/pdis/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<PdIResponseDTO> obtenerPdiPorId(@PathVariable String id) {
+    public ResponseEntity<PdIDTO> obtenerPdiPorId(@PathVariable String id) {
         PdIDTO dto = fachadaProcesadorPdI.buscarPdIPorId(id);
-        return ResponseEntity.ok(toResponse(dto));
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    public ResponseEntity<ProcesamientoResponseDTO> procesarNuevoPdi(@RequestBody PdIRequestDTO req) {
+    public ResponseEntity<PdIDTO> procesarNuevoPdi(@RequestBody PdIDTO req) {
         System.out.println("ProcesadorPdI ← Fuentes (req DTO): " + req);
 
         PdIDTO entrada = new PdIDTO(
@@ -67,11 +63,10 @@ public class PdIController {
             var etiquetas = (procesado.etiquetas() != null) ? procesado.etiquetas() : List.of();
 
             // Procesada OK (nueva o duplicada)
-            return ResponseEntity.ok(new ProcesamientoResponseDTO(pdiId, true, (List<String>) etiquetas));
+            return ResponseEntity.ok(entrada);
 
         } catch (HechoInactivoException e) {
-            // 200 con procesada=false, etiquetas vacías y pdiId=null
-            return ResponseEntity.ok(new ProcesamientoResponseDTO(null, false, List.of()));
+            return ResponseEntity.ok(req);
         }
     }
 
@@ -81,18 +76,5 @@ public class PdIController {
     public ResponseEntity<Void> borrarTodo() {
         fachadaProcesadorPdI.borrarTodo();
         return ResponseEntity.noContent().build();
-    }
-
-    // ---------- mappers ----------
-    private PdIResponseDTO toResponse(PdIDTO p) {
-        return new PdIResponseDTO(
-                p.id(),
-                p.hechoId(),
-                p.descripcion(),
-                p.lugar(),
-                p.momento(),
-                p.contenido(),
-                p.etiquetas()
-        );
     }
 }
