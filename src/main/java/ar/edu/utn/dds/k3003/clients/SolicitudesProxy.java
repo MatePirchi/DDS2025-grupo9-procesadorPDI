@@ -23,7 +23,7 @@ public class SolicitudesProxy implements FachadaSolicitudes {
 
         var retrofit =
                 new Retrofit.Builder()
-                        .baseUrl(this.endpoint)
+                        .baseUrl("https://two025-tp-entrega-2-francoquiroga01.onrender.com/")
                         .addConverterFactory(JacksonConverterFactory.create(objectMapper))
                         .build();
 
