@@ -2,9 +2,9 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16
+    image: postgres:17
     environment:
-      POSTGRES_DB: tpdds
+      POSTGRES_DB: tpdds2025_pdi_grupo9
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -32,6 +32,7 @@ services:
       DB_NAME: tpdds2025_pdi_grupo9
       DB_USER: tpdds2025_pdi_grupo9_user
       DB_PASS: oBC3fVr5pv7wjbuaM2kYfMs3knQVcVBZ
+      DDAPI: b72d9e619b345053b742be2d707dec6d
     ports:
       - "8080:8080"
     restart: unless-stopped
