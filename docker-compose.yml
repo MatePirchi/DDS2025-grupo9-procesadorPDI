@@ -31,7 +31,7 @@ services:
       DB_PORT: "5432"
       DB_NAME: tpdds2025_pdi_grupo9
       DB_USER: tpdds2025_pdi_grupo9_user
-      DB_PASSWORD: oBC3fVr5pv7wjbuaM2kYfMs3knQVcVBZ
+      DB_PASS: oBC3fVr5pv7wjbuaM2kYfMs3knQVcVBZ
     ports:
       - "8080:8080"
     restart: unless-stopped

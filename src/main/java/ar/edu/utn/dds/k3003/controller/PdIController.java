@@ -6,7 +6,6 @@ import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,5 +75,11 @@ public class PdIController {
     public ResponseEntity<Void> borrarTodo() {
         fachadaProcesadorPdI.borrarTodo();
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/prueba")
+    public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
+        return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.hechoId(), req.descripcion())));
+
     }
 }
