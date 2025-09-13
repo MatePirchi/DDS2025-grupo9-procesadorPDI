@@ -63,8 +63,6 @@ public class Fachada implements FachadaProcesadorPDI {
                     "Fallo al consultar 'Solicitudes' para hecho " + hechoId, e);
         }
 
-        activo = true;
-
         if (!activo) {
             throw new HechoInactivoException(hechoId);
         }
