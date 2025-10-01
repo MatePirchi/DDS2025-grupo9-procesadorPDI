@@ -79,7 +79,7 @@ public class PdIController {
 
     @PatchMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
-        return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.hechoId(), req.descripcion())));
+        return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.id(), req.hechoId())));
 
     }
 }
