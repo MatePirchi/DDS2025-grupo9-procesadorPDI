@@ -1,6 +1,9 @@
 package ar.edu.utn.dds.k3003.app;
 
 import ar.edu.utn.dds.k3003.clients.AnalizadorOCR;
+import ar.edu.utn.dds.k3003.clients.Etiquetador;
+import ar.edu.utn.dds.k3003.clients.EtiquetadorAPILayerProxy;
+import ar.edu.utn.dds.k3003.clients.OCRSpaceProxy;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIurlDTO;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
@@ -12,6 +15,7 @@ import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.InMemoryPdIRepo;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 
 import lombok.Setter;
@@ -28,8 +32,8 @@ import java.util.stream.Collectors;
 public class Fachada implements FachadaProcesadorPDI {
 
     private FachadaSolicitudes fachadaSolicitudes;
-    @Setter
-    private AnalizadorOCR analizadorOCR;
+    private final AnalizadorOCR analizadorOCR = new OCRSpaceProxy(new ObjectMapper());
+    private final Etiquetador etiquetador = new EtiquetadorAPILayerProxy(new ObjectMapper());
     @Getter private PdIRepository pdiRepository;
 
     private final AtomicLong generadorID = new AtomicLong(1);
@@ -89,7 +93,7 @@ public class Fachada implements FachadaProcesadorPDI {
         }
         String urlImagen = nuevoPdI.getContenido();
         nuevoPdI.setContenido(analizadorOCR.analizarImagenURL(urlImagen));
-        nuevoPdI.setEtiquetas(etiquetar(urlImagen));
+        nuevoPdI.setEtiquetas(etiquetador.obtenerEtiquetas(urlImagen));
         pdiRepository.save(nuevoPdI);
         System.out.println("Guardado PdI id=" + nuevoPdI.getId() + " hechoId=" + nuevoPdI.getHechoId());
 
@@ -143,22 +147,6 @@ public class Fachada implements FachadaProcesadorPDI {
                 pdi.getEtiquetas());
     }
 
-    public List<String> etiquetar(String contenido) {
-        List<String> etiquetas = new ArrayList<>();
-        if (contenido != null) {
-            if (contenido.toLowerCase().contains("fuego")) {
-                etiquetas.add("incendio");
-            }
-
-            if (contenido.toLowerCase().contains("agua")) {
-                etiquetas.add("inundación");
-            }
-        }
-        if (etiquetas.isEmpty()) {
-            etiquetas.add("sin clasificar");
-        }
-        return etiquetas;
-    }
 
     public PdI recibirPdIDTO(PdIDTO pdiDTO) {
         PdI nuevoPdI =

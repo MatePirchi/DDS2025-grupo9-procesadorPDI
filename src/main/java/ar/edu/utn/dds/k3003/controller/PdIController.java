@@ -1,10 +1,15 @@
 package ar.edu.utn.dds.k3003.controller;
 
 
+import ar.edu.utn.dds.k3003.clients.AnalizadorOCR;
+import ar.edu.utn.dds.k3003.clients.Etiquetador;
+import ar.edu.utn.dds.k3003.clients.EtiquetadorAPILayerProxy;
+import ar.edu.utn.dds.k3003.clients.OCRSpaceProxy;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -79,6 +84,11 @@ public class PdIController {
 
     @PatchMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
+        AnalizadorOCR proxy = new OCRSpaceProxy(new ObjectMapper());
+        Etiquetador etiq = new EtiquetadorAPILayerProxy(new ObjectMapper());
+        String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
+        List<String> etiquetas = etiq.obtenerEtiquetas("http://dl.a9t9.com/ocrbenchmark/eng.png");
+        System.out.println(textoEnImagen + "\n ETIQUETAS: \n" + etiquetas);
         return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.id(), req.hechoId())));
 
     }
