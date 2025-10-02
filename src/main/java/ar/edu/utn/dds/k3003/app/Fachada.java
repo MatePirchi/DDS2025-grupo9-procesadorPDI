@@ -1,5 +1,7 @@
 package ar.edu.utn.dds.k3003.app;
 
+import ar.edu.utn.dds.k3003.clients.AnalizadorOCR;
+import ar.edu.utn.dds.k3003.clients.dtos.PDIurlDTO;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
@@ -12,6 +14,7 @@ import ar.edu.utn.dds.k3003.repository.PdIRepository;
 
 import lombok.Getter;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,8 @@ import java.util.stream.Collectors;
 public class Fachada implements FachadaProcesadorPDI {
 
     private FachadaSolicitudes fachadaSolicitudes;
-
+    @Setter
+    private AnalizadorOCR analizadorOCR;
     @Getter private PdIRepository pdiRepository;
 
     private final AtomicLong generadorID = new AtomicLong(1);
@@ -83,8 +87,9 @@ public class Fachada implements FachadaProcesadorPDI {
         if (yaProcesado.isPresent()) {
             return convertirADTO(yaProcesado.get());
         }
-        
-        nuevoPdI.setEtiquetas(etiquetar(nuevoPdI.getContenido()));
+        String urlImagen = nuevoPdI.getContenido();
+        nuevoPdI.setContenido(analizadorOCR.analizarImagenURL(urlImagen));
+        nuevoPdI.setEtiquetas(etiquetar(urlImagen));
         pdiRepository.save(nuevoPdI);
         System.out.println("Guardado PdI id=" + nuevoPdI.getId() + " hechoId=" + nuevoPdI.getHechoId());
 
@@ -101,7 +106,6 @@ public class Fachada implements FachadaProcesadorPDI {
 
         return pdiDTOAEnviar;
     }
-
     @Override
     public PdIDTO buscarPdIPorId(String idString) {
         Long id = Long.parseLong(idString);
