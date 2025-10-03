@@ -63,14 +63,15 @@ public class PdIController {
         try {
             PdIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
 
-            String pdiId = procesado.id() != null ? String.valueOf(procesado.id()) : null;
-            var etiquetas = (procesado.etiquetas() != null) ? procesado.etiquetas() : List.of();
-
+            if(procesado.hechoId() == null){
+                System.out.println("Hecho de ID: " + entrada.hechoId() + " no esta activo");
+                return ResponseEntity.ok(procesado);
+            }
             // Procesada OK (nueva o duplicada)
-            return ResponseEntity.ok(entrada);
+            return ResponseEntity.ok(procesado);
 
-        } catch (HechoInactivoException e) {
-            return ResponseEntity.ok(req);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
