@@ -83,7 +83,7 @@ public class PdIController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/prueba")
+    @PostMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
         AnalizadorOCR proxy = new OCRSpaceProxy(new ObjectMapper());
         Etiquetador etiq = new EtiquetadorAPILayerProxy(new ObjectMapper());
