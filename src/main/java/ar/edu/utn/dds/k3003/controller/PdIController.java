@@ -1,28 +1,33 @@
 package ar.edu.utn.dds.k3003.controller;
 
 
-import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCR;
-import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCRSpace;
-import ar.edu.utn.dds.k3003.analizadores.Etiquetador;
-import ar.edu.utn.dds.k3003.analizadores.EtiquetadorAPILayer;
+import ar.edu.utn.dds.k3003.analizadores.*;
+import ar.edu.utn.dds.k3003.clients.SolicitudesProxy;
+import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
+import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 
+import ar.edu.utn.dds.k3003.model.PdI;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/pdis")
 public class PdIController {
 
     private final FachadaProcesadorPDI fachadaProcesadorPdI;
+    private final Procesador procesador;
 
     @Autowired
-    public PdIController(FachadaProcesadorPDI fachadaProcesadorPdI) {
+    public PdIController(FachadaProcesadorPDI fachadaProcesadorPdI, Procesador procesador) {
         this.fachadaProcesadorPdI = fachadaProcesadorPdI;
+        this.procesador = procesador;
     }
 
     @GetMapping
@@ -60,16 +65,17 @@ public class PdIController {
 
         try {
             PdIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
-
-            if(procesado.hechoId() == null){
-                System.out.println("Hecho de ID: " + entrada.hechoId() + " no esta activo");
-                return ResponseEntity.ok(procesado);
-            }
             // Procesada OK (nueva o duplicada)
             return ResponseEntity.ok(procesado);
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (SolicitudesCommunicationException e) {
+            // Timeouts, 5xx, DNS, etc.
+            System.out.println("SolicitudesCommunicationException " + e);
+            return ResponseEntity.internalServerError().body(new PdIDTO(null, "Error, Ocurrió un error al conectarse con Solicitudes"));
+        }
+        catch (HechoInexistenteException e) {
+            System.out.println("Hecho de ID: " + entrada.hechoId() + " no esta activo");
+            return ResponseEntity.unprocessableEntity().body(new PdIDTO(null, "Error, hecho de id" + entrada.hechoId() +" no esta activo" ));
         }
     }
 
@@ -83,25 +89,39 @@ public class PdIController {
 
     @PostMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
-        System.out.println("Entro a Prueba: " + req);
-        AnalizadorOCR proxy = new AnalizadorOCRSpace();
-        Etiquetador etiq = new EtiquetadorAPILayer();
-        System.out.println("Proxys creados");
-        String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
-        System.out.println("Imagen Analizada: " + textoEnImagen);
-        List<String> etiquetas = etiq.obtenerEtiquetas("http://dl.a9t9.com/ocrbenchmark/eng.png");
-        System.out.println("ETIQUETAS: \n" + etiquetas);
+        String url = "http://dl.a9t9.com/ocrbenchmark/eng.png";
+        PdI pdi = new PdI(null, "2", "algo", null, url);
+        procesador.procesar(pdi);
+        System.out.println("Texto Imagen: "+ pdi.getContenido()+"\n" +
+                "ETIQUETAS: \n" + pdi.getEtiquetas());
         return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.id(), req.hechoId())));
 
     }
     @PostMapping("/prueba/ocr")
     public ResponseEntity<PdIDTO> pruebaOcr(@RequestBody PdIDTO req) {
         System.out.println("Entro a Prueba");
-        AnalizadorOCR proxy = new AnalizadorOCRSpace();
+        String url = "http://dl.a9t9.com/ocrbenchmark/eng.png";
+        PdI pdi = new PdI(null, "2", "algo", null, url);
+        procesador.procesar(pdi);
         System.out.println("Proxys creados");
-        String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
-        System.out.println("Imagen Analizada: " + textoEnImagen);
         return  ResponseEntity.ok(new PdIDTO(req.id(), req.hechoId()));
 
+    }
+
+    @PostMapping("/prueba/sol")
+    public ResponseEntity<PdIDTO> pruebaSol(@RequestBody PdIDTO req) {
+        SolicitudesProxy proxy = new SolicitudesProxy(new ObjectMapper());
+        System.out.println("Entro a Prueba");
+        try {
+            boolean activo = proxy.estaActivo("1");
+            if (activo) {
+                System.out.println("Solicitudes activo");
+            }
+        }
+        catch (RuntimeException e) {
+            System.out.println("SolicitudesCommunicationException " + e);
+        }
+
+        return ResponseEntity.ok(new PdIDTO(req.id(), req.hechoId()));
     }
 }

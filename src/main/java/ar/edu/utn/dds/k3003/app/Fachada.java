@@ -1,24 +1,23 @@
 package ar.edu.utn.dds.k3003.app;
 
-import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCR;
-import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCRSpace;
-import ar.edu.utn.dds.k3003.analizadores.Etiquetador;
-import ar.edu.utn.dds.k3003.analizadores.EtiquetadorAPILayer;
+import ar.edu.utn.dds.k3003.analizadores.*;
+import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
+import ar.edu.utn.dds.k3003.metrics.ApplicationMetrics;
 import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.InMemoryPdIRepo;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,9 +27,11 @@ import java.util.stream.Collectors;
 public class Fachada implements FachadaProcesadorPDI {
 
     private FachadaSolicitudes fachadaSolicitudes;
-    private final AnalizadorOCR analizadorOCR = new AnalizadorOCRSpace();
-    private final Etiquetador etiquetador = new EtiquetadorAPILayer();
     @Getter private PdIRepository pdiRepository;
+    @Autowired
+    private ApplicationMetrics metrics;
+    @Autowired
+    private Procesador procesador;
 
     private final AtomicLong generadorID = new AtomicLong(1);
 
@@ -49,26 +50,30 @@ public class Fachada implements FachadaProcesadorPDI {
     }
 
     @Override
-    public PdIDTO procesar(PdIDTO pdiDTORecibido) {
+    public PdIDTO procesar(PdIDTO pdiDTORecibido) throws HechoInactivoException, HechoInexistenteException  {
         System.out.println("ProcesadorPdI.Fachada.procesar() recibió: " + pdiDTORecibido);
-
         final String hechoId = pdiDTORecibido.hechoId();
         boolean activo;
 
+
         try {
             activo = fachadaSolicitudes.estaActivo(hechoId);
+            metrics.incPdisProc();
 
         } catch (java.util.NoSuchElementException e) {
             // El proxy tira esto si no hay solicitud para ese ID
             throw new HechoInexistenteException(hechoId, e);
-        } catch (RestClientException e) {
+        } catch (RuntimeException e) {
             // Timeouts, 5xx, DNS, etc.
+            metrics.incError();
             throw new SolicitudesCommunicationException(
-                    "Fallo al consultar 'Solicitudes' para hecho " + hechoId, e);
+                    "Fallo al consultar 'Solicitudes' para hecho " + hechoId + " Error: " + e, e);
         }
 
         if (!activo) {
-            return new PdIDTO(null, null);
+            metrics.incError();
+            metrics.incErrorAprobacion();
+            throw new HechoInactivoException(hechoId);
         }
 
         PdI nuevoPdI = recibirPdIDTO(pdiDTORecibido);
@@ -87,9 +92,11 @@ public class Fachada implements FachadaProcesadorPDI {
         if (yaProcesado.isPresent()) {
             return convertirADTO(yaProcesado.get());
         }
-        String urlImagen = nuevoPdI.getContenido();
-        nuevoPdI.setContenido(analizadorOCR.analizarImagenURL(urlImagen));
-        nuevoPdI.setEtiquetas(etiquetador.obtenerEtiquetas(urlImagen));
+
+        if(nuevoPdI.getContenido() != null ) {
+            procesador.procesar(nuevoPdI);
+        }
+
         pdiRepository.save(nuevoPdI);
         System.out.println("Guardado PdI id=" + nuevoPdI.getId() + " hechoId=" + nuevoPdI.getHechoId());
 
@@ -108,6 +115,7 @@ public class Fachada implements FachadaProcesadorPDI {
     }
     @Override
     public PdIDTO buscarPdIPorId(String idString) {
+        metrics.incConsulta();
         Long id = Long.parseLong(idString);
         PdI pdi =
                 pdiRepository
@@ -121,6 +129,7 @@ public class Fachada implements FachadaProcesadorPDI {
 
     @Override
     public List<PdIDTO> buscarPorHecho(String hechoId) {
+        metrics.incConsulta();
         List<PdI> lista = pdiRepository.findByHechoId(hechoId);
 
         System.out.println("Buscando por hechoId: " + hechoId + " - Encontrados: " + lista.size());
@@ -150,17 +159,17 @@ public class Fachada implements FachadaProcesadorPDI {
                 pdiDTO.contenido());
     }
 
-        @Override
-        public List<PdIDTO> pdis() {
-            return this.pdiRepository.findAll()
-                    .stream()
-                    .map(this::convertirADTO)
-                    .toList();
-        }
+    @Override
+    public List<PdIDTO> pdis() {
+        return this.pdiRepository.findAll()
+                .stream()
+                .map(this::convertirADTO)
+                .toList();
+    }
 
-        @Override
-        public void borrarTodo() {
-            pdiRepository.deleteAll();
-            generadorID.set(1); // opcional: reiniciar IDs en memoria
-        }
+    @Override
+    public void borrarTodo() {
+        pdiRepository.deleteAll();
+        generadorID.set(1); // opcional: reiniciar IDs en memoria
+    }
 }

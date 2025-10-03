@@ -5,6 +5,7 @@ import java.util.List;
 
 public record OCRspaceDTO(List <parsedResult> ParsedResults, int OCRExitCode, boolean IsErroredOnProcessing,
                           String SearchablePDFURL, int ProcessingTimeInMilliseconds) {
+
     public record parsedResult(TextOverlay TextOverlay, String TextOrientation, int FileParseExitCode, String ParsedText,
                                String ErrorMessage, String ErrorDetails){}
     public record TextOverlay(List<Lines> Lines, boolean HasOverlay, String Message) {}
