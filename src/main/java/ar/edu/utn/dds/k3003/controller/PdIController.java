@@ -1,15 +1,13 @@
 package ar.edu.utn.dds.k3003.controller;
 
 
-import ar.edu.utn.dds.k3003.clients.AnalizadorOCR;
-import ar.edu.utn.dds.k3003.clients.Etiquetador;
-import ar.edu.utn.dds.k3003.clients.EtiquetadorAPILayerProxy;
-import ar.edu.utn.dds.k3003.clients.OCRSpaceProxy;
-import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
+import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCR;
+import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCRSpace;
+import ar.edu.utn.dds.k3003.analizadores.Etiquetador;
+import ar.edu.utn.dds.k3003.analizadores.EtiquetadorAPILayer;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -86,8 +84,8 @@ public class PdIController {
     @PostMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
         System.out.println("Entro a Prueba: " + req);
-        AnalizadorOCR proxy = new OCRSpaceProxy(new ObjectMapper());
-        Etiquetador etiq = new EtiquetadorAPILayerProxy(new ObjectMapper());
+        AnalizadorOCR proxy = new AnalizadorOCRSpace();
+        Etiquetador etiq = new EtiquetadorAPILayer();
         System.out.println("Proxys creados");
         String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
         System.out.println("Imagen Analizada: " + textoEnImagen);
@@ -99,7 +97,7 @@ public class PdIController {
     @PostMapping("/prueba/ocr")
     public ResponseEntity<PdIDTO> pruebaOcr(@RequestBody PdIDTO req) {
         System.out.println("Entro a Prueba");
-        AnalizadorOCR proxy = new OCRSpaceProxy(new ObjectMapper());
+        AnalizadorOCR proxy = new AnalizadorOCRSpace();
         System.out.println("Proxys creados");
         String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
         System.out.println("Imagen Analizada: " + textoEnImagen);

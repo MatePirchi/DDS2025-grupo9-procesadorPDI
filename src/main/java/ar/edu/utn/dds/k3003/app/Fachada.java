@@ -1,11 +1,9 @@
 package ar.edu.utn.dds.k3003.app;
 
-import ar.edu.utn.dds.k3003.clients.AnalizadorOCR;
-import ar.edu.utn.dds.k3003.clients.Etiquetador;
-import ar.edu.utn.dds.k3003.clients.EtiquetadorAPILayerProxy;
-import ar.edu.utn.dds.k3003.clients.OCRSpaceProxy;
-import ar.edu.utn.dds.k3003.clients.dtos.PDIurlDTO;
-import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
+import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCR;
+import ar.edu.utn.dds.k3003.analizadores.AnalizadorOCRSpace;
+import ar.edu.utn.dds.k3003.analizadores.Etiquetador;
+import ar.edu.utn.dds.k3003.analizadores.EtiquetadorAPILayer;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
@@ -15,11 +13,9 @@ import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.InMemoryPdIRepo;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.Getter;
 
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -32,8 +28,8 @@ import java.util.stream.Collectors;
 public class Fachada implements FachadaProcesadorPDI {
 
     private FachadaSolicitudes fachadaSolicitudes;
-    private final AnalizadorOCR analizadorOCR = new OCRSpaceProxy(new ObjectMapper());
-    private final Etiquetador etiquetador = new EtiquetadorAPILayerProxy(new ObjectMapper());
+    private final AnalizadorOCR analizadorOCR = new AnalizadorOCRSpace();
+    private final Etiquetador etiquetador = new EtiquetadorAPILayer();
     @Getter private PdIRepository pdiRepository;
 
     private final AtomicLong generadorID = new AtomicLong(1);
@@ -120,8 +116,7 @@ public class Fachada implements FachadaProcesadorPDI {
                                 () ->
                                         new NoSuchElementException(
                                                 "No se encontró el PdI con id: " + id));
-        PdIDTO pdiDTO = convertirADTO(pdi);
-        return pdiDTO;
+        return convertirADTO(pdi);
     }
 
     @Override
@@ -130,10 +125,7 @@ public class Fachada implements FachadaProcesadorPDI {
 
         System.out.println("Buscando por hechoId: " + hechoId + " - Encontrados: " + lista.size());
 
-        List<PdIDTO> listaPdiDTO =
-                lista.stream().map(this::convertirADTO).collect(Collectors.toList());
-
-        return listaPdiDTO;
+        return lista.stream().map(this::convertirADTO).collect(Collectors.toList());
     }
 
     public PdIDTO convertirADTO(PdI pdi) {
@@ -149,14 +141,13 @@ public class Fachada implements FachadaProcesadorPDI {
 
 
     public PdI recibirPdIDTO(PdIDTO pdiDTO) {
-        PdI nuevoPdI =
-                new PdI(
-                        pdiDTO.hechoId(),
-                        pdiDTO.descripcion(),
-                        pdiDTO.lugar(),
-                        pdiDTO.momento(),
-                        pdiDTO.contenido());
-        return nuevoPdI;
+
+        return new PdI(
+                pdiDTO.hechoId(),
+                pdiDTO.descripcion(),
+                pdiDTO.lugar(),
+                pdiDTO.momento(),
+                pdiDTO.contenido());
     }
 
         @Override
