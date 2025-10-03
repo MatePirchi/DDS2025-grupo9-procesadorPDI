@@ -85,11 +85,14 @@ public class PdIController {
 
     @PostMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
+        System.out.println("Entro a Prueba: " + req);
         AnalizadorOCR proxy = new OCRSpaceProxy(new ObjectMapper());
         Etiquetador etiq = new EtiquetadorAPILayerProxy(new ObjectMapper());
+        System.out.println("Proxys creados");
         String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
+        System.out.println("Imagen Analizada: " + textoEnImagen);
         List<String> etiquetas = etiq.obtenerEtiquetas("http://dl.a9t9.com/ocrbenchmark/eng.png");
-        System.out.println(textoEnImagen + "\n ETIQUETAS: \n" + etiquetas);
+        System.out.println("ETIQUETAS: \n" + etiquetas);
         return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.id(), req.hechoId())));
 
     }
