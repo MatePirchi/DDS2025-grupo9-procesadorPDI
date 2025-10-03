@@ -96,4 +96,14 @@ public class PdIController {
         return  ResponseEntity.ok(this.fachadaProcesadorPdI.procesar(new PdIDTO(req.id(), req.hechoId())));
 
     }
+    @PostMapping("/prueba/ocr")
+    public ResponseEntity<PdIDTO> pruebaOcr(@RequestBody PdIDTO req) {
+        System.out.println("Entro a Prueba");
+        AnalizadorOCR proxy = new OCRSpaceProxy(new ObjectMapper());
+        System.out.println("Proxys creados");
+        String textoEnImagen = proxy.analizarImagenURL("http://dl.a9t9.com/ocrbenchmark/eng.png");
+        System.out.println("Imagen Analizada: " + textoEnImagen);
+        return  ResponseEntity.ok(new PdIDTO(req.id(), req.hechoId()));
+
+    }
 }
