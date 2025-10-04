@@ -53,7 +53,7 @@ public class SolicitudesProxy implements FachadaSolicitudes {
 
             var response = service.getSolicitudes(hechoId).execute();
             if(response.isSuccessful() && response.body() != null) {
-                return !response.body().isEmpty(); //Si la lista que me retornan esta vacía asumo que no está activo
+                return response.body().isEmpty(); //Si la lista que me retornan esta vacía asumo que está activo
             }
             throw new RuntimeException( "Error al comprobar si hecho de ID: " + hechoId + " esta activo, Respuesta fue exitosa: " + response.isSuccessful());
 
