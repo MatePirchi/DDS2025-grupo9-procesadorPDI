@@ -7,13 +7,12 @@ import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCom
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
-import ar.edu.utn.dds.k3003.metrics.ApplicationMetrics;
+import ar.edu.utn.dds.k3003.config.MetricsConfig;
 import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.InMemoryPdIRepo;
 import ar.edu.utn.dds.k3003.repository.PdIRepository;
 
 
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,7 @@ public class Fachada implements FachadaProcesadorPDI {
     private FachadaSolicitudes fachadaSolicitudes;
     @Getter private PdIRepository pdiRepository;
     @Autowired
-    private ApplicationMetrics metrics;
+    private MetricsConfig metrics;
     @Autowired
     private Procesador procesador;
 

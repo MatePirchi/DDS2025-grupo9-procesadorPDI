@@ -35,5 +35,4 @@ public class ApiErrors {
         return ResponseEntity.unprocessableEntity().body(error);
     }
 
-    // Podés agregar otros handlers si los necesitás
 }

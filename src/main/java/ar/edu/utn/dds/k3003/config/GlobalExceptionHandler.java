@@ -21,11 +21,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final String METRIC_NAME = "app.error";
-    private final MeterRegistry registry;
+
 
     public GlobalExceptionHandler(MeterRegistry registry) {
-        this.registry = registry;
+
     }
 
     @ExceptionHandler(NoSuchElementException.class)
@@ -68,9 +67,6 @@ public class GlobalExceptionHandler {
 
     // Helper: arma respuesta y cuenta métricas {type,status}
     private ResponseEntity<Map<String, String>> buildAndCount(HttpStatus status, String type, String error, String message) {
-        // métrica para Datadog
-        registry.counter(METRIC_NAME, "type", type, "status", String.valueOf(status.value())).increment();
-
         Map<String, String> response = new HashMap<>();
         response.put("status", String.valueOf(status.value()));
         response.put("error", error);
