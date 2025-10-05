@@ -8,17 +8,14 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+@Data
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class PdI {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String hechoId;
     private String descripcion;
@@ -27,11 +24,14 @@ public class PdI {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime momento;
 
+    @Column(columnDefinition = "TEXT")
     private String contenido;
 
-    @ElementCollection private List<String> etiquetas;
+    @ElementCollection
+    private List<String> etiquetas;
 
     public PdI(
+            String id,
             String hechoId,
             String descripcion,
             String lugar,

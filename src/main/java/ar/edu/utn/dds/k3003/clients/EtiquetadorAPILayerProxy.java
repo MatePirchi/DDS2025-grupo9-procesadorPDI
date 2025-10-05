@@ -1,6 +1,7 @@
 package ar.edu.utn.dds.k3003.clients;
 
 import ar.edu.utn.dds.k3003.clients.dtos.EtiquetadorAPILayerDTO;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaFallidaException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -24,12 +25,12 @@ public class EtiquetadorAPILayerProxy {
     public List<EtiquetadorAPILayerDTO> obtenerEtiquetas(String urlImagen) {
         try {
             var response = service.getImageLabeling("ZUfYsPoInCZSDCdow7BH5El4IPAzmlBm", urlImagen).execute();
-            if (!response.isSuccessful()) {throw new RuntimeException("Respuesta no Exitosa");}
-            if (response.body() == null) {throw new RuntimeException("Cuerpo de Respuesta vacio");}
+            if (!response.isSuccessful()) {throw new ComunicacionExternaFallidaException("Respuesta de ApiLayer no Exitosa");}
+            if (response.body() == null) {throw new ComunicacionExternaFallidaException("Cuerpo de Respuesta de ApiLayer vacio");}
             return response.body();
         }
         catch (Exception e) {
-            throw new RuntimeException("Fallo en la comunicacion con APILayer:" + e.getMessage());
+            throw new ComunicacionExternaFallidaException("Fallo en la comunicacion con APILayer:" + e.getMessage());
         }
     }
 }

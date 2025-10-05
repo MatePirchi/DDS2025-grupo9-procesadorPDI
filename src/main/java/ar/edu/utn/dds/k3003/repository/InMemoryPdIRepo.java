@@ -10,7 +10,7 @@ import java.util.*;
 @Repository
 @Profile("test")
 public class InMemoryPdIRepo implements PdIRepository {
-    private final Map<Long, PdI> diccionarioPdI = new HashMap<>();
+    private final Map<String, PdI> diccionarioPdI = new HashMap<>();
     private final Map<String, List<PdI>> diccionarioHechos = new HashMap<>();
 
     public PdI save(PdI pdi) {
@@ -19,7 +19,7 @@ public class InMemoryPdIRepo implements PdIRepository {
         return pdi;
     }
 
-    public Optional<PdI> findById(Long id) {
+    public Optional<PdI> findById(String id) {
         return Optional.ofNullable(diccionarioPdI.get(id));
     }
 

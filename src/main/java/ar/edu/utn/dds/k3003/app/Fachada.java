@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -31,8 +31,6 @@ public class Fachada implements FachadaProcesadorPDI {
     private MetricsConfig metrics;
     @Autowired
     private Procesador procesador;
-
-    private final AtomicLong generadorID = new AtomicLong(1);
 
     protected Fachada() {
         this.pdiRepository = new InMemoryPdIRepo();
@@ -76,28 +74,35 @@ public class Fachada implements FachadaProcesadorPDI {
         }
 
         PdI nuevoPdI = recibirPdIDTO(pdiDTORecibido);
+        nuevoPdI.setId(pdiDTORecibido.id());
         System.out.println("ProcesadorPdI.Fachada.procesar() mapeado a entidad: " + nuevoPdI);
 
-        Optional<PdI> yaProcesado =
-                pdiRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
-                        .filter(
-                                p ->
-                                        p.getDescripcion().equals(nuevoPdI.getDescripcion())
-                                                && p.getLugar().equals(nuevoPdI.getLugar())
-                                                && p.getMomento().equals(nuevoPdI.getMomento())
-                                                && p.getContenido().equals(nuevoPdI.getContenido()))
-                        .findFirst();
-
+        Optional<PdI> yaProcesado;
+        try {
+            yaProcesado =
+                    pdiRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
+                            .filter(
+                                    p ->
+                                            p.getDescripcion().equals(nuevoPdI.getDescripcion())
+                                                    && p.getLugar().equals(nuevoPdI.getLugar())
+                                                    && p.getMomento().equals(nuevoPdI.getMomento())
+                                                    && p.getContenido().equals(nuevoPdI.getContenido()))
+                            .findFirst();
+        }
+        catch (NullPointerException e) {
+            throw new RuntimeException("Algun campo de la entidad es nula: " + nuevoPdI.getId() + " " + nuevoPdI.getHechoId() + " " + nuevoPdI.getDescripcion() + " " + nuevoPdI.getLugar()+ " " + nuevoPdI.getMomento() + " " + nuevoPdI.getContenido() + " " + nuevoPdI.getEtiquetas() + "error: " + e, e);
+        }
         if (yaProcesado.isPresent()) {
             return convertirADTO(yaProcesado.get());
         }
+
 
         if(nuevoPdI.getContenido() != null ) {
             procesador.procesar(nuevoPdI);
         }
 
+        System.out.println("Guardado PdI id=" + nuevoPdI.getId() + " hechoId=" + nuevoPdI.getHechoId() + " Descripcion=" + nuevoPdI.getDescripcion() + " Lugar " + nuevoPdI.getLugar() + "Momento" + nuevoPdI.getMomento() + " Contenido=" + nuevoPdI.getContenido()+ "Etiquetas: " + nuevoPdI.getEtiquetas());
         pdiRepository.save(nuevoPdI);
-        System.out.println("Guardado PdI id=" + nuevoPdI.getId() + " hechoId=" + nuevoPdI.getHechoId());
 
 
         System.out.println(
@@ -115,14 +120,13 @@ public class Fachada implements FachadaProcesadorPDI {
     @Override
     public PdIDTO buscarPdIPorId(String idString) {
         metrics.incConsulta();
-        Long id = Long.parseLong(idString);
         PdI pdi =
                 pdiRepository
-                        .findById(id)
+                        .findById(idString)
                         .orElseThrow(
                                 () ->
                                         new NoSuchElementException(
-                                                "No se encontró el PdI con id: " + id));
+                                                "No se encontró el PdI con id: " + idString));
         return convertirADTO(pdi);
     }
 
@@ -151,6 +155,7 @@ public class Fachada implements FachadaProcesadorPDI {
     public PdI recibirPdIDTO(PdIDTO pdiDTO) {
 
         return new PdI(
+                pdiDTO.id(),
                 pdiDTO.hechoId(),
                 pdiDTO.descripcion(),
                 pdiDTO.lugar(),
@@ -169,6 +174,5 @@ public class Fachada implements FachadaProcesadorPDI {
     @Override
     public void borrarTodo() {
         pdiRepository.deleteAll();
-        generadorID.set(1); // opcional: reiniciar IDs en memoria
     }
 }

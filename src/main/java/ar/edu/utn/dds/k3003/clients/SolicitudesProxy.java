@@ -1,5 +1,6 @@
 package ar.edu.utn.dds.k3003.clients;
 
+import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaFuente;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.facades.dtos.EstadoSolicitudBorradoEnum;
@@ -50,12 +51,16 @@ public class SolicitudesProxy implements FachadaSolicitudes {
     @SneakyThrows
     @Override
     public boolean estaActivo(String hechoId) throws RuntimeException {
-
+        try {
             var response = service.getSolicitudes(hechoId).execute();
-            if(response.isSuccessful() && response.body() != null) {
+            if (response.isSuccessful() && response.body() != null) {
                 return response.body().isEmpty(); //Si la lista que me retornan esta vacía asumo que está activo
             }
-            throw new RuntimeException( "Error al comprobar si hecho de ID: " + hechoId + " esta activo, Respuesta fue exitosa: " + response.isSuccessful());
+            throw new RuntimeException("Error al comprobar si hecho de ID: " + hechoId + " esta activo, Respuesta fue exitosa: " + response.isSuccessful());
+        }
+        catch (Exception e) {
+            throw new SolicitudesCommunicationException("Ocurrio un error al comunicarse con Solicitudes, error: " + e, e);
+        }
 
 
     }

@@ -11,11 +11,11 @@ import java.util.Optional;
 
 @Repository
 @Profile("!test")
-public interface JpaPdIRepository extends JpaRepository<PdI, Long>, PdIRepository {
+public interface JpaPdIRepository extends JpaRepository<PdI, String>, PdIRepository {
 
     PdI save(PdI pdi);
 
-    Optional<PdI> findById(Long id);
+    Optional<PdI> findById(String id);
 
     List<PdI> findByHechoId(String hechoId);
 

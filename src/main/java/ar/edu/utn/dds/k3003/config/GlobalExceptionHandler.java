@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
 
 
 
-    public GlobalExceptionHandler(MeterRegistry registry) {
+    public GlobalExceptionHandler() {
 
     }
 
@@ -37,8 +37,7 @@ public class GlobalExceptionHandler {
         return buildAndCount(HttpStatus.BAD_REQUEST, "InvalidParameterException", "Bad Request", e.getMessage());
     }
 
-    // === Nuevos handlers con códigos ajustados y métricas ===
-
+    // === Nuevos handlers con códigos ajustados y métricas ===)
     @ExceptionHandler(HechoInactivoException.class)
     public ResponseEntity<Map<String, String>> handleHechoInactivo(HechoInactivoException e) {
         return buildAndCount(HttpStatus.UNPROCESSABLE_ENTITY, "HechoInactivoException",

@@ -3,6 +3,7 @@ package ar.edu.utn.dds.k3003.controller;
 
 import ar.edu.utn.dds.k3003.analizadores.*;
 import ar.edu.utn.dds.k3003.clients.SolicitudesProxy;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaFallidaException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
@@ -15,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/api/pdis")
@@ -51,9 +52,11 @@ public class PdIController {
     @PostMapping
     public ResponseEntity<PdIDTO> procesarNuevoPdi(@RequestBody PdIDTO req) {
         System.out.println("ProcesadorPdI ← Fuentes (req DTO): " + req);
-
+        if(this.tieneAlgunParametroNulo(req)){
+            return ResponseEntity.badRequest().body( new PdIDTO(null, "Todos los parametros del PdI (excepto las etiquetas) deben tener algun valor"));
+        }
         PdIDTO entrada = new PdIDTO(
-                null,
+                req.id(),
                 req.hechoId(),
                 req.descripcion(),
                 req.lugar(),
@@ -77,8 +80,17 @@ public class PdIController {
             System.out.println("Hecho de ID: " + entrada.hechoId() + " no esta activo");
             return ResponseEntity.unprocessableEntity().body(new PdIDTO(null, "Error, hecho de id" + entrada.hechoId() +" no esta activo" ));
         }
+        catch (ComunicacionExternaFallidaException e){
+            System.out.println("ComunicacionExternaFallidaException " + e);
+            return ResponseEntity.internalServerError().body(new PdIDTO(null, "Error, Ocurrió un error al conectarse con algun ente externo, error: "+ e.getMessage() ));
+        }
     }
 
+    private boolean tieneAlgunParametroNulo(PdIDTO elem){
+        return  elem.id() == null || elem.hechoId() == null ||
+                elem.descripcion() == null || elem.lugar() == null || elem.momento() == null ||
+                elem.contenido() == null;
+    }
 
     // DELETE /api/pdis/delete
     @DeleteMapping("/delete")
@@ -90,7 +102,7 @@ public class PdIController {
     @PostMapping("/prueba")
     public ResponseEntity<PdIDTO> prueba(@RequestBody PdIDTO req) {
         String url = "http://dl.a9t9.com/ocrbenchmark/eng.png";
-        PdI pdi = new PdI(null, "2", "algo", null, url);
+        PdI pdi = new PdI(null, null, "2", "algo", null, url);
         procesador.procesar(pdi);
         System.out.println("Texto Imagen: "+ pdi.getContenido()+"\n" +
                 "ETIQUETAS: \n" + pdi.getEtiquetas());
@@ -101,7 +113,7 @@ public class PdIController {
     public ResponseEntity<PdIDTO> pruebaOcr(@RequestBody PdIDTO req) {
         System.out.println("Entro a Prueba");
         String url = "http://dl.a9t9.com/ocrbenchmark/eng.png";
-        PdI pdi = new PdI(null, "2", "algo", null, url);
+        PdI pdi = new PdI(null, null, "2", "algo", null, url);
         procesador.procesar(pdi);
         System.out.println("Proxys creados");
         return  ResponseEntity.ok(new PdIDTO(req.id(), req.hechoId()));
