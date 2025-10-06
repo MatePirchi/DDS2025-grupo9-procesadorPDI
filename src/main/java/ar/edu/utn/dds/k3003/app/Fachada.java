@@ -73,8 +73,8 @@ public class Fachada implements FachadaProcesadorPDI {
             return convertirADTO(nuevoPdI); //Si no se debe guardar el nuevo pdi lo retorno directamente
         }
 
-        assert nuevoPdI.getUrlImagen()!= null;
-        if (nuevoPdI.getTextoImagen() == null || nuevoPdI.getEtiquetas() == null)
+
+        if (nuevoPdI.getUrlImagen() != null &&(nuevoPdI.getTextoImagen() == null || nuevoPdI.getEtiquetas() == null))
             procesador.procesar(nuevoPdI);
 
         pdiRepository.save(nuevoPdI);
@@ -134,7 +134,9 @@ public class Fachada implements FachadaProcesadorPDI {
                 pdiDTO.descripcion(),
                 pdiDTO.lugar(),
                 pdiDTO.momento(),
-                pdiDTO.urlImagen());
+                pdiDTO.urlImagen(),
+                pdiDTO.textoImagen(),
+                pdiDTO.etiquetas());
     }
 
     private boolean seDebeGuardar(PdI nuevoPdI) {
@@ -142,16 +144,24 @@ public class Fachada implements FachadaProcesadorPDI {
         try{
             yaProcesado = pdiRepository.findById(nuevoPdI.getId());
             //Si el pdi está en la BDD puede que no haga falta hacer nada
-            if(yaProcesado.isPresent() && yaProcesado.get().getUrlImagen().equals(nuevoPdI.getUrlImagen())){
+            if(yaProcesado.isPresent() && (yaProcesado.get().getUrlImagen() != null && yaProcesado.get().getUrlImagen().equals(nuevoPdI.getUrlImagen()))){
                 //Si ya fue procesado la url, agrego el resultado al nuevo pdi
                 nuevoPdI.setTextoImagen(yaProcesado.get().getTextoImagen());
                 nuevoPdI.setEtiquetas(yaProcesado.get().getEtiquetas());
 
                 //Si no cambio ningun dato del Pdi, no hace falta guardar nada
                 return !yaProcesado.get().getHechoId().equals(nuevoPdI.getHechoId())
-                        || !yaProcesado.get().getDescripcion().equals(nuevoPdI.getDescripcion())
-                        || !yaProcesado.get().getLugar().equals(nuevoPdI.getLugar())
-                        || !yaProcesado.get().getMomento().equals(nuevoPdI.getMomento());
+                        ||( yaProcesado.get().getDescripcion() != null ?
+                            !yaProcesado.get().getDescripcion().equals(nuevoPdI.getDescripcion()) : nuevoPdI.getDescripcion() != null )
+
+                        ||( yaProcesado.get().getLugar() != null?
+                            !yaProcesado.get().getLugar().equals(nuevoPdI.getLugar()) : nuevoPdI.getLugar() != null )
+
+                        ||( yaProcesado.get().getMomento() != null ?
+                            !yaProcesado.get().getMomento().equals(nuevoPdI.getMomento()) : nuevoPdI.getMomento() != null );
+                //Si el campo del pdi en memoria no es nulo, y es diferente del campo del pdi recibido, se debe guardar (retornar true)
+                //Si el campo del pdi en memoria es nulo, solo se debe guardar si el campo del pdi recibido no es nulo
+                //hechoId nunca debe ser nulo
             }
             //Si el pdi no esta en la BDD o hace falta procesar el nuevo url, entonces hay que guardarlo
             return true;

@@ -3,7 +3,6 @@ package ar.edu.utn.dds.k3003.controller;
 
 import ar.edu.utn.dds.k3003.analizadores.*;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
-import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,8 +49,8 @@ public class PdIController {
     @PostMapping
     public ResponseEntity<PDIDTO> procesarNuevoPdi(@RequestBody PDIDTO req) {
         System.out.println("ProcesadorPdI ← Fuentes (req DTO): " + req);
-        if(this.tieneAlgunParametroNulo(req)){
-            return ResponseEntity.badRequest().body( new PDIDTO(null, "Todos los parametros del PdI (excepto las etiquetas y el textoImagen) deben tener algun valor"));
+        if(req.id() == null || req.hechoId() == null){
+            return ResponseEntity.badRequest().body( new PDIDTO(null, "El id y hechoId del PDI deben tener algun valor"));
         }
         PDIDTO entrada = new PDIDTO(
                 req.id(),
@@ -65,22 +64,9 @@ public class PdIController {
         );
         System.out.println("ProcesadorPdI mapea a PdIDTO: " + entrada);
 
-        try {
-            PDIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
-            // Procesada OK (nueva o duplicada)
-            return ResponseEntity.ok(procesado);
-
-        }
-        catch (ComunicacionExternaException e){
-            System.out.println("ComunicacionExternaFallidaException " + e);
-            return ResponseEntity.internalServerError().body(new PDIDTO(null, "Error, Ocurrió un error al conectarse con algun ente externo, error: "+ e.getMessage() ));
-        }
-    }
-
-    private boolean tieneAlgunParametroNulo(PDIDTO elem){
-        return  elem.id() == null || elem.hechoId() == null ||
-                elem.descripcion() == null || elem.lugar() == null || elem.momento() == null ||
-                elem.urlImagen()== null;
+        PDIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
+        // Procesada OK (nueva o duplicada)
+        return ResponseEntity.ok(procesado);
     }
 
     // DELETE /api/pdis/delete

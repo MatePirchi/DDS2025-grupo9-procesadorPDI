@@ -14,7 +14,7 @@ public class Procesador {
 
     public void procesar(PdI pdi) {
         String urlImagen = pdi.getUrlImagen();
-
+        System.out.println("Procesando imagen en url: " + urlImagen);
         CompletableFuture<String> tareaOCR = analizarConOCR(urlImagen);
         CompletableFuture<List<String>> tareaEtiquetas = obtenerEtiquetas(urlImagen);
 
