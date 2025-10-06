@@ -36,14 +36,14 @@ public class PdI {
             String descripcion,
             String lugar,
             LocalDateTime momento,
-            String urlImagen,
-            String textoImagen) {
+            String urlImagen) {
         this.id = id;
         this.hechoId = hechoId;
         this.descripcion = descripcion;
         this.lugar = lugar;
         this.momento = momento;
         this.urlImagen = urlImagen;
-        this.textoImagen = textoImagen;
+        this.textoImagen = null;
+        this.etiquetas = null;
     }
 }

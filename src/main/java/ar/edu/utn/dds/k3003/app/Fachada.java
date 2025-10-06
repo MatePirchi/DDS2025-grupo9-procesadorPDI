@@ -4,7 +4,6 @@ import ar.edu.utn.dds.k3003.analizadores.*;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
-import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.config.MetricsConfig;
@@ -52,7 +51,6 @@ public class Fachada implements FachadaProcesadorPDI {
         final String hechoId = pdiDTORecibido.hechoId();
         boolean activo;
 
-
         try {
             activo = fachadaSolicitudes.estaActivo(hechoId);
             metrics.incPdisProc();
@@ -60,11 +58,6 @@ public class Fachada implements FachadaProcesadorPDI {
         } catch (java.util.NoSuchElementException e) {
             // El proxy tira esto si no hay solicitud para ese ID
             throw new HechoInexistenteException(hechoId, e);
-        } catch (RuntimeException e) {
-            // Timeouts, 5xx, DNS, etc.
-            metrics.incError();
-            throw new SolicitudesCommunicationException(
-                    "Fallo al consultar 'Solicitudes' para hecho " + hechoId + " Error: " + e, e);
         }
 
         if (!activo) {
@@ -74,32 +67,14 @@ public class Fachada implements FachadaProcesadorPDI {
         }
 
         PdI nuevoPdI = recibirPdIDTO(pdiDTORecibido);
-        nuevoPdI.setId(pdiDTORecibido.id());
         System.out.println("ProcesadorPdI.Fachada.procesar() mapeado a entidad: " + nuevoPdI);
 
-        Optional<PdI> yaProcesado;
-        boolean seDebeProcesar = true;
-        try{
-            yaProcesado = pdiRepository.findById(nuevoPdI.getId());
-            //Si el pdi está en la BDD puede que no haga falta hacer nada
-            if(yaProcesado.isPresent() && yaProcesado.get().getUrlImagen().equals(nuevoPdI.getUrlImagen())){
-                seDebeProcesar = false;//Si la imagen ya fue procesada, no hay que hacerlo de vuelta
-
-                if(yaProcesado.get().getHechoId().equals(hechoId)
-                        && yaProcesado.get().getDescripcion().equals(nuevoPdI.getDescripcion())
-                        && yaProcesado.get().getLugar().equals(nuevoPdI.getLugar())
-                        && yaProcesado.get().getMomento().equals(nuevoPdI.getMomento())){ //Si no cambio ningun dato del Pdi, lo retorno directamente
-                    return convertirADTO(yaProcesado.get());
-                }
-            }
-        }
-        catch (NullPointerException e) {
-            throw new RuntimeException("Algun campo de la entidad es nula: " + nuevoPdI.getId() + " " + nuevoPdI.getHechoId() + " " + nuevoPdI.getDescripcion()
-                    + " " + nuevoPdI.getLugar()+ " " + nuevoPdI.getMomento() + " " + nuevoPdI.getUrlImagen() + "error: " + e, e);
+        if (!this.seDebeGuardar(nuevoPdI)) {
+            return convertirADTO(nuevoPdI); //Si no se debe guardar el nuevo pdi lo retorno directamente
         }
 
         assert nuevoPdI.getUrlImagen()!= null;
-        if (seDebeProcesar)
+        if (nuevoPdI.getTextoImagen() == null || nuevoPdI.getEtiquetas() == null)
             procesador.procesar(nuevoPdI);
 
         pdiRepository.save(nuevoPdI);
@@ -159,8 +134,32 @@ public class Fachada implements FachadaProcesadorPDI {
                 pdiDTO.descripcion(),
                 pdiDTO.lugar(),
                 pdiDTO.momento(),
-                pdiDTO.urlImagen(),
-                pdiDTO.textoImagen());
+                pdiDTO.urlImagen());
+    }
+
+    private boolean seDebeGuardar(PdI nuevoPdI) {
+        Optional<PdI> yaProcesado;
+        try{
+            yaProcesado = pdiRepository.findById(nuevoPdI.getId());
+            //Si el pdi está en la BDD puede que no haga falta hacer nada
+            if(yaProcesado.isPresent() && yaProcesado.get().getUrlImagen().equals(nuevoPdI.getUrlImagen())){
+                //Si ya fue procesado la url, agrego el resultado al nuevo pdi
+                nuevoPdI.setTextoImagen(yaProcesado.get().getTextoImagen());
+                nuevoPdI.setEtiquetas(yaProcesado.get().getEtiquetas());
+
+                //Si no cambio ningun dato del Pdi, no hace falta guardar nada
+                return !yaProcesado.get().getHechoId().equals(nuevoPdI.getHechoId())
+                        || !yaProcesado.get().getDescripcion().equals(nuevoPdI.getDescripcion())
+                        || !yaProcesado.get().getLugar().equals(nuevoPdI.getLugar())
+                        || !yaProcesado.get().getMomento().equals(nuevoPdI.getMomento());
+            }
+            //Si el pdi no esta en la BDD o hace falta procesar el nuevo url, entonces hay que guardarlo
+            return true;
+        }
+        catch (NullPointerException e) {
+            throw new RuntimeException("Algun campo de la entidad es nula: " + nuevoPdI.getId() + " " + nuevoPdI.getHechoId() + " " + nuevoPdI.getDescripcion()
+                    + " " + nuevoPdI.getLugar()+ " " + nuevoPdI.getMomento() + " " + nuevoPdI.getUrlImagen() + "error: " + e, e);
+        }
     }
 
     @Override

@@ -34,6 +34,11 @@ public class PdIController {
         return ResponseEntity.ok(lista);
 
     }
+    @GetMapping("/wake")
+    public ResponseEntity<String> wakeyWakey() {
+        //No hace nada, hecho para despertar
+        return ResponseEntity.ok("Me Desperte");
+    }
 
     // GET /api/pdis/{id}
     @GetMapping("/{id}")
