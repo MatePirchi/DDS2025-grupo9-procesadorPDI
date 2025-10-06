@@ -1,10 +1,12 @@
 package ar.edu.utn.dds.k3003.clients;
 
 import ar.edu.utn.dds.k3003.clients.dtos.OCRspaceDTO;
-import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaFallidaException;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
+
+import java.net.ConnectException;
 
 public class OCRSpaceProxy  {
     private final OCRSpaceRetrofitClient service;
@@ -24,13 +26,13 @@ public class OCRSpaceProxy  {
     public OCRspaceDTO hacerPedidoAOCRSpace(String imagenURL) {
         try {
             var response = service.analizarImagenOCR("K89669199988957","eng", false, imagenURL, false, false).execute();
-            if (!response.isSuccessful()) {throw new ComunicacionExternaFallidaException("Respuesta de OCRSpace no Exitosa");}
-            if (response.body() == null) { throw new ComunicacionExternaFallidaException("Cuerpo de Respuesta de OCRSpace vacio"); }
+            if (!response.isSuccessful()) {throw new ConnectException("Respuesta no Exitosa");}
+            if (response.body() == null) { throw new ConnectException("Cuerpo de Respuesta vacio"); }
 
             return response.body();
         }
         catch ( Exception e){
-            throw new ComunicacionExternaFallidaException("Fallo en la comunicacion con OCRSpace:" + e.getMessage());
+            throw new ComunicacionExternaException("Fallo en la comunicacion con OCRSpace: " + e.getMessage());
         }
 
     }

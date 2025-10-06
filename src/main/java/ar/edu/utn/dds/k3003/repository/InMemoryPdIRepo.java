@@ -34,10 +34,12 @@ public class InMemoryPdIRepo implements PdIRepository {
     }
 
     private boolean equals(PdI a, PdI b) {
-        return a.getDescripcion().equals(b.getDescripcion())
+        return a.getHechoId().equals(b.getHechoId())
+                && a.getDescripcion().equals(b.getDescripcion())
                 && a.getLugar().equals(b.getLugar())
                 && a.getMomento().equals(b.getMomento())
-                && a.getContenido().equals(b.getContenido());
+                && a.getUrlImagen().equals(b.getUrlImagen())
+                && a.getTextoImagen().equals(b.getTextoImagen());
     }
 
     @Override

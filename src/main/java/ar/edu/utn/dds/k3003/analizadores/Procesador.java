@@ -1,5 +1,4 @@
 package ar.edu.utn.dds.k3003.analizadores;
-
 import ar.edu.utn.dds.k3003.model.PdI;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ public class Procesador {
     Etiquetador etiquetador = new EtiquetadorAPILayer();
 
     public void procesar(PdI pdi) {
-        String urlImagen = pdi.getContenido();
+        String urlImagen = pdi.getUrlImagen();
 
         CompletableFuture<String> tareaOCR = analizarConOCR(urlImagen);
         CompletableFuture<List<String>> tareaEtiquetas = obtenerEtiquetas(urlImagen);
@@ -23,7 +22,7 @@ public class Procesador {
             String contenidoOCR = tareaOCR.get();
             List<String> etiquetas = tareaEtiquetas.get();
 
-            pdi.setContenido(contenidoOCR);
+            pdi.setTextoImagen(contenidoOCR);
             pdi.setEtiquetas(etiquetas);
 
         } catch (InterruptedException | ExecutionException e) {

@@ -1,12 +1,12 @@
 package ar.edu.utn.dds.k3003.app;
 
 import ar.edu.utn.dds.k3003.analizadores.*;
+import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
-import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 import ar.edu.utn.dds.k3003.config.MetricsConfig;
 import ar.edu.utn.dds.k3003.model.PdI;
 import ar.edu.utn.dds.k3003.repository.InMemoryPdIRepo;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class Fachada implements FachadaProcesadorPDI {
 
     private FachadaSolicitudes fachadaSolicitudes;
-    @Getter private PdIRepository pdiRepository;
+    @Getter private final PdIRepository pdiRepository;
     @Autowired
     private MetricsConfig metrics;
     @Autowired
@@ -47,7 +47,7 @@ public class Fachada implements FachadaProcesadorPDI {
     }
 
     @Override
-    public PdIDTO procesar(PdIDTO pdiDTORecibido) throws HechoInactivoException, HechoInexistenteException  {
+    public PDIDTO procesar(PDIDTO pdiDTORecibido) throws HechoInactivoException, HechoInexistenteException  {
         System.out.println("ProcesadorPdI.Fachada.procesar() recibió: " + pdiDTORecibido);
         final String hechoId = pdiDTORecibido.hechoId();
         boolean activo;
@@ -78,47 +78,45 @@ public class Fachada implements FachadaProcesadorPDI {
         System.out.println("ProcesadorPdI.Fachada.procesar() mapeado a entidad: " + nuevoPdI);
 
         Optional<PdI> yaProcesado;
-        try {
-            yaProcesado =
-                    pdiRepository.findByHechoId(nuevoPdI.getHechoId()).stream()
-                            .filter(
-                                    p ->
-                                            p.getDescripcion().equals(nuevoPdI.getDescripcion())
-                                                    && p.getLugar().equals(nuevoPdI.getLugar())
-                                                    && p.getMomento().equals(nuevoPdI.getMomento())
-                                                    && p.getContenido().equals(nuevoPdI.getContenido()))
-                            .findFirst();
+        boolean seDebeProcesar = true;
+        try{
+            yaProcesado = pdiRepository.findById(nuevoPdI.getId());
+            //Si el pdi está en la BDD puede que no haga falta hacer nada
+            if(yaProcesado.isPresent() && yaProcesado.get().getUrlImagen().equals(nuevoPdI.getUrlImagen())){
+                seDebeProcesar = false;//Si la imagen ya fue procesada, no hay que hacerlo de vuelta
+
+                if(yaProcesado.get().getHechoId().equals(hechoId)
+                        && yaProcesado.get().getDescripcion().equals(nuevoPdI.getDescripcion())
+                        && yaProcesado.get().getLugar().equals(nuevoPdI.getLugar())
+                        && yaProcesado.get().getMomento().equals(nuevoPdI.getMomento())){ //Si no cambio ningun dato del Pdi, lo retorno directamente
+                    return convertirADTO(yaProcesado.get());
+                }
+            }
         }
         catch (NullPointerException e) {
-            throw new RuntimeException("Algun campo de la entidad es nula: " + nuevoPdI.getId() + " " + nuevoPdI.getHechoId() + " " + nuevoPdI.getDescripcion() + " " + nuevoPdI.getLugar()+ " " + nuevoPdI.getMomento() + " " + nuevoPdI.getContenido() + " " + nuevoPdI.getEtiquetas() + "error: " + e, e);
-        }
-        if (yaProcesado.isPresent()) {
-            return convertirADTO(yaProcesado.get());
+            throw new RuntimeException("Algun campo de la entidad es nula: " + nuevoPdI.getId() + " " + nuevoPdI.getHechoId() + " " + nuevoPdI.getDescripcion()
+                    + " " + nuevoPdI.getLugar()+ " " + nuevoPdI.getMomento() + " " + nuevoPdI.getUrlImagen() + "error: " + e, e);
         }
 
-
-        if(nuevoPdI.getContenido() != null ) {
+        assert nuevoPdI.getUrlImagen()!= null;
+        if (seDebeProcesar)
             procesador.procesar(nuevoPdI);
-        }
 
-        System.out.println("Guardado PdI id=" + nuevoPdI.getId() + " hechoId=" + nuevoPdI.getHechoId() + " Descripcion=" + nuevoPdI.getDescripcion() + " Lugar " + nuevoPdI.getLugar() + "Momento" + nuevoPdI.getMomento() + " Contenido=" + nuevoPdI.getContenido()+ "Etiquetas: " + nuevoPdI.getEtiquetas());
         pdiRepository.save(nuevoPdI);
-
-
         System.out.println(
                 "Se guardó el PdI con ID "
                         + nuevoPdI.getId()
                         + " en hechoId: "
                         + nuevoPdI.getHechoId());
 
-        PdIDTO pdiDTOAEnviar = convertirADTO(nuevoPdI);
+        PDIDTO pdiDTOAEnviar = convertirADTO(nuevoPdI);
 
         System.out.println("ProcesadorPdI.Fachada.procesar() responde: " + pdiDTOAEnviar);
 
         return pdiDTOAEnviar;
     }
     @Override
-    public PdIDTO buscarPdIPorId(String idString) {
+    public PDIDTO buscarPdIPorId(String idString) {
         metrics.incConsulta();
         PdI pdi =
                 pdiRepository
@@ -131,7 +129,7 @@ public class Fachada implements FachadaProcesadorPDI {
     }
 
     @Override
-    public List<PdIDTO> buscarPorHecho(String hechoId) {
+    public List<PDIDTO> buscarPorHecho(String hechoId) {
         metrics.incConsulta();
         List<PdI> lista = pdiRepository.findByHechoId(hechoId);
 
@@ -140,19 +138,20 @@ public class Fachada implements FachadaProcesadorPDI {
         return lista.stream().map(this::convertirADTO).collect(Collectors.toList());
     }
 
-    public PdIDTO convertirADTO(PdI pdi) {
-        return new PdIDTO(
+    public PDIDTO convertirADTO(PdI pdi) {
+        return new PDIDTO(
                 String.valueOf(pdi.getId()),
                 pdi.getHechoId(),
                 pdi.getDescripcion(),
                 pdi.getLugar(),
                 pdi.getMomento(),
-                pdi.getContenido(),
+                pdi.getUrlImagen(),
+                pdi.getTextoImagen(),
                 pdi.getEtiquetas());
     }
 
 
-    public PdI recibirPdIDTO(PdIDTO pdiDTO) {
+    public PdI recibirPdIDTO(PDIDTO pdiDTO) {
 
         return new PdI(
                 pdiDTO.id(),
@@ -160,11 +159,12 @@ public class Fachada implements FachadaProcesadorPDI {
                 pdiDTO.descripcion(),
                 pdiDTO.lugar(),
                 pdiDTO.momento(),
-                pdiDTO.contenido());
+                pdiDTO.urlImagen(),
+                pdiDTO.textoImagen());
     }
 
     @Override
-    public List<PdIDTO> pdis() {
+    public List<PDIDTO> pdis() {
         return this.pdiRepository.findAll()
                 .stream()
                 .map(this::convertirADTO)

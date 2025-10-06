@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
+import java.net.ConnectException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -53,13 +54,14 @@ public class SolicitudesProxy implements FachadaSolicitudes {
     public boolean estaActivo(String hechoId) throws RuntimeException {
         try {
             var response = service.getSolicitudes(hechoId).execute();
-            if (response.isSuccessful() && response.body() != null) {
-                return response.body().isEmpty(); //Si la lista que me retornan esta vacía asumo que está activo
-            }
-            throw new RuntimeException("Error al comprobar si hecho de ID: " + hechoId + " esta activo, Respuesta fue exitosa: " + response.isSuccessful());
+            if (!response.isSuccessful()) {throw new ConnectException("Respuesta no Exitosa");}
+            if (response.body() == null) { throw new ConnectException("Cuerpo de Respuesta vacio"); }
+
+            return response.body().isEmpty(); //Si la lista que me retornan esta vacía asumo que está activo
         }
         catch (Exception e) {
-            throw new SolicitudesCommunicationException("Ocurrio un error al comunicarse con Solicitudes, error: " + e, e);
+            throw new SolicitudesCommunicationException("Ocurrio un error al comunicarse con Solicitudes, hechoId: "+ hechoId +
+                    ", error: " + e, e);
         }
 
 

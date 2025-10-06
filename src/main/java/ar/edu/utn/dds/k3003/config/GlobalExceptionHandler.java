@@ -1,5 +1,6 @@
 package ar.edu.utn.dds.k3003.config;
 
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -16,7 +17,7 @@ import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
 import ar.edu.utn.dds.k3003.exceptions.infrastructure.solicitudes.SolicitudesCommunicationException;
 
 // Micrometer (para exportar a Datadog)
-import io.micrometer.core.instrument.MeterRegistry;
+
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,7 +38,7 @@ public class GlobalExceptionHandler {
         return buildAndCount(HttpStatus.BAD_REQUEST, "InvalidParameterException", "Bad Request", e.getMessage());
     }
 
-    // === Nuevos handlers con códigos ajustados y métricas ===)
+
     @ExceptionHandler(HechoInactivoException.class)
     public ResponseEntity<Map<String, String>> handleHechoInactivo(HechoInactivoException e) {
         return buildAndCount(HttpStatus.UNPROCESSABLE_ENTITY, "HechoInactivoException",
@@ -54,6 +55,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleSolicitudesCommunication(SolicitudesCommunicationException e) {
         return buildAndCount(HttpStatus.BAD_GATEWAY, "SolicitudesCommunicationException",
                 "Solicitudes Communication Error", e.getMessage());
+    }
+
+    @ExceptionHandler(ComunicacionExternaException.class)
+    public ResponseEntity<Map<String, String>> handleComunicacionExternaException(ComunicacionExternaException e) {
+        return buildAndCount(HttpStatus.FAILED_DEPENDENCY, "ComunicacionExternaException",
+                "Comunicacion Externa Error", e.getMessage());
     }
 
     // =======================================================

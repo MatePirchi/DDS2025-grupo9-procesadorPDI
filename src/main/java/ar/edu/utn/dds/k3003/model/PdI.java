@@ -23,9 +23,9 @@ public class PdI {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime momento;
-
+    private  String urlImagen;
     @Column(columnDefinition = "TEXT")
-    private String contenido;
+    private String textoImagen;
 
     @ElementCollection
     private List<String> etiquetas;
@@ -36,11 +36,14 @@ public class PdI {
             String descripcion,
             String lugar,
             LocalDateTime momento,
-            String contenido) {
+            String urlImagen,
+            String textoImagen) {
+        this.id = id;
         this.hechoId = hechoId;
         this.descripcion = descripcion;
         this.lugar = lugar;
         this.momento = momento;
-        this.contenido = contenido;
+        this.urlImagen = urlImagen;
+        this.textoImagen = textoImagen;
     }
 }
