@@ -14,8 +14,7 @@ public class EtiquetadorAPILayer implements Etiquetador {
     public List<String> obtenerEtiquetas(String urlImagen) {
         List<String> etiquetas = new ArrayList<>();
         List<EtiquetadorAPILayerDTO> rta = proxy.obtenerEtiquetas(urlImagen);
-        rta.stream().filter( e-> e.confidence()> 0.60)
-                    .forEach(e -> etiquetas.add(e.label()));
+        rta.forEach(e -> etiquetas.add(e.label()));
 
         return etiquetas;
     }

@@ -34,7 +34,7 @@ public class PdIController {
 
     }
     @GetMapping("/wake")
-    public ResponseEntity<String> wakeyWakey() {
+    public ResponseEntity<String> wakeUP() {
         //No hace nada, hecho para despertar
         return ResponseEntity.ok("Me Desperte");
     }
