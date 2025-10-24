@@ -3,24 +3,28 @@ import ar.edu.utn.dds.k3003.model.PdI;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @Service
 public class Procesador {
-    AnalizadorOCR analizadorOCR = new AnalizadorOCRSpace();
-    Etiquetador etiquetador = new EtiquetadorAPILayer();
+    private final List<ServicioProcesamiento> servicios = List.of(
+            new AnalizadorOCRSpace(), new EtiquetadorAPILayer()
+    );
+
 
     public void procesar(PdI pdi) {
         String urlImagen = pdi.getUrlImagen();
         System.out.println("Procesando imagen en url: " + urlImagen);
-        CompletableFuture<String> tareaOCR = analizarConOCR(urlImagen);
-        CompletableFuture<List<String>> tareaEtiquetas = obtenerEtiquetas(urlImagen);
+        List<CompletableFuture<List<String>>> tareas = new ArrayList<>();
+        //Defino todas las tareas a hacer
+        servicios.forEach(servicio -> tareas.add(realizarProceso(urlImagen, servicio)));
 
         try {
-            String contenidoOCR = tareaOCR.get();
-            List<String> etiquetas = tareaEtiquetas.get();
+            String contenidoOCR = tareas.get(0).get().get(0); //Solamente retorna 1 String, que es el texto
+            List<String> etiquetas = tareas.get(1).get();
 
             pdi.setTextoImagen(contenidoOCR);
             pdi.setEtiquetas(etiquetas);
@@ -28,17 +32,12 @@ public class Procesador {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Error en procesamiento asíncrono, Error: " + e, e);
         }
+
     }
 
     @Async("taskExecutor")  // Ejecuta en hilo separado
-    public CompletableFuture<String> analizarConOCR(String urlImagen) {
-        String resultado = analizadorOCR.analizarImagenURL(urlImagen);
+    public CompletableFuture<List<String>> realizarProceso(String urlImagen, ServicioProcesamiento servicio) {
+        List<String> resultado = servicio.procesar(urlImagen);
         return CompletableFuture.completedFuture(resultado);
-    }
-
-    @Async("taskExecutor")  // Ejecuta en hilo separado
-    public CompletableFuture<List<String>> obtenerEtiquetas(String urlImagen) {
-        List<String> etiquetas = etiquetador.obtenerEtiquetas(urlImagen);
-        return CompletableFuture.completedFuture(etiquetas);
     }
 }

@@ -7,8 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EtiquetadorAPILayer implements Etiquetador{
+public class EtiquetadorAPILayer implements Etiquetador {
     EtiquetadorAPILayerProxy proxy = new EtiquetadorAPILayerProxy(new ObjectMapper());
+
     @Override
     public List<String> obtenerEtiquetas(String urlImagen) {
         List<String> etiquetas = new ArrayList<>();
@@ -17,5 +18,10 @@ public class EtiquetadorAPILayer implements Etiquetador{
                     .forEach(e -> etiquetas.add(e.label()));
 
         return etiquetas;
+    }
+
+    @Override
+    public List<String> procesar(String urlImagen) {
+        return obtenerEtiquetas(urlImagen);
     }
 }
