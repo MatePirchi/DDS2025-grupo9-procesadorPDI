@@ -53,7 +53,6 @@ public class Fachada implements FachadaProcesadorPDI {
 
         try {
             activo = fachadaSolicitudes.estaActivo(hechoId);
-            metrics.incPdisProc();
 
         } catch (java.util.NoSuchElementException e) {
             // El proxy tira esto si no hay solicitud para ese ID
@@ -74,8 +73,10 @@ public class Fachada implements FachadaProcesadorPDI {
         }
 
 
-        if (nuevoPdI.getUrlImagen() != null &&(nuevoPdI.getTextoImagen() == null || nuevoPdI.getEtiquetas() == null))
+        if (nuevoPdI.getUrlImagen() != null &&(nuevoPdI.getTextoImagen() == null || nuevoPdI.getEtiquetas().isEmpty())) {
             procesador.procesar(nuevoPdI);
+            metrics.incPdisProc();
+        }
 
         pdiRepository.save(nuevoPdI);
         System.out.println(
@@ -145,6 +146,10 @@ public class Fachada implements FachadaProcesadorPDI {
             yaProcesado = pdiRepository.findById(nuevoPdI.getId());
             //Si el pdi está en la BDD puede que no haga falta hacer nada
             if(yaProcesado.isPresent() && (yaProcesado.get().getUrlImagen() != null && yaProcesado.get().getUrlImagen().equals(nuevoPdI.getUrlImagen()))){
+                if(yaProcesado.get().getTextoImagen() == null || yaProcesado.get().getEtiquetas().isEmpty()){
+                    //Si tiene URL, pero no tiene texto o etiquetas, se reintenta procesar. Por lo que habra que guardarlo de vuelta
+                    return true;
+                }
                 //Si ya fue procesado la url, agrego el resultado al nuevo pdi
                 nuevoPdI.setTextoImagen(yaProcesado.get().getTextoImagen());
                 nuevoPdI.setEtiquetas(yaProcesado.get().getEtiquetas());

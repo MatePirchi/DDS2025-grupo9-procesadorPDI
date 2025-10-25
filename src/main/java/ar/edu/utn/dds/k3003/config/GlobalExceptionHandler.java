@@ -3,6 +3,7 @@ package ar.edu.utn.dds.k3003.config;
 import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -28,6 +29,27 @@ public class GlobalExceptionHandler {
 
     }
 
+    // Maneja errores de JSON mal formado o tipos incompatibles
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("status", String.valueOf(HttpStatus.BAD_REQUEST.value()));
+        errors.put("error", "Malformed JSON");
+        
+        String message = "El JSON enviado no es válido o tiene tipos de datos incorrectos";
+        
+        // Intenta extraer un mensaje más específico
+        if (ex.getMessage() != null) {
+            if (ex.getMessage().contains("Cannot construct instance")) {
+                message = "El formato de algún campo es incorrecto. Verifica que las listas sean arrays [] y no strings";
+            } else if (ex.getMessage().contains("Cannot deserialize")) {
+                message = "No se pudo deserializar el JSON. Verifica los tipos de datos";
+            }
+        }
+        
+        errors.put("message", message);
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, String>> handleNoSuchElementException(NoSuchElementException e) {
         return buildAndCount(HttpStatus.NOT_FOUND, "NoSuchElementException", "Not Found", e.getMessage());

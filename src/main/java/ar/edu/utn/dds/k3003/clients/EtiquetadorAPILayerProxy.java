@@ -12,9 +12,11 @@ import java.util.List;
 public class EtiquetadorAPILayerProxy {
     private final EtiquetadorAPILayerRetrofitClient service;
     private final ObjectMapper objectMapper;
+    private final String apiKey;
 
-    public EtiquetadorAPILayerProxy(ObjectMapper objectMapper) {
+    public EtiquetadorAPILayerProxy(ObjectMapper objectMapper, String apiKey) {
         this.objectMapper = objectMapper;
+        this.apiKey = apiKey;
         var retrofit =
                 new Retrofit.Builder()
                         .baseUrl("https://api.apilayer.com/")
@@ -27,7 +29,7 @@ public class EtiquetadorAPILayerProxy {
 
     public List<EtiquetadorAPILayerDTO> obtenerEtiquetas(String urlImagen) {
         try {
-            var response = service.getImageLabeling("MpSiHIaOGSFv29KNHJeys2uyouuHSt5H", urlImagen).execute();
+            var response = service.getImageLabeling(this.apiKey, urlImagen).execute();
             if (!response.isSuccessful()) {
                 // Check error body for "no labels found" message
                 String errorMessage = "";

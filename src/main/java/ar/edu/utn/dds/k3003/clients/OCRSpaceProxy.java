@@ -1,9 +1,9 @@
 package ar.edu.utn.dds.k3003.clients;
 
 import ar.edu.utn.dds.k3003.clients.dtos.OCRspaceDTO;
-import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
 import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.OCRspaceException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
@@ -11,9 +11,10 @@ import java.net.ConnectException;
 
 public class OCRSpaceProxy  {
     private final OCRSpaceRetrofitClient service;
+    private final String apiKey;
 
-    public OCRSpaceProxy(ObjectMapper objectMapper) {
-
+    public OCRSpaceProxy(ObjectMapper objectMapper, @Value("${ocrspace.apikey}") String apiKey) {
+        this.apiKey = apiKey;
         var retrofit =
                 new Retrofit.Builder()
                         .baseUrl("https://api.ocr.space/")
@@ -26,7 +27,7 @@ public class OCRSpaceProxy  {
 
     public OCRspaceDTO hacerPedidoAOCRSpace(String imagenURL) {
         try {
-            var response = service.analizarImagenOCR("K89669199988957","eng", false, imagenURL, false, false).execute();
+            var response = service.analizarImagenOCR(this.apiKey,"eng", false, imagenURL, false, false).execute();
             if (!response.isSuccessful()) {throw new ConnectException("Respuesta no Exitosa");}
             if (response.body() == null) { throw new ConnectException("Cuerpo de Respuesta vacio"); }
 

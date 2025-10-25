@@ -3,13 +3,20 @@ package ar.edu.utn.dds.k3003.analizadores;
 import ar.edu.utn.dds.k3003.clients.OCRSpaceProxy;
 import ar.edu.utn.dds.k3003.clients.dtos.OCRspaceDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
 
+@Service
 public class AnalizadorOCRSpace implements AnalizadorOCR {
-    OCRSpaceProxy proxy = new OCRSpaceProxy(new ObjectMapper());
-    
+
+    OCRSpaceProxy proxy;
+
+    public AnalizadorOCRSpace(@Value("${apilayer.apikey}") String apiKey) {
+        this.proxy = new OCRSpaceProxy(new ObjectMapper(), apiKey);
+    }
     @Override
     public String analizarImagenURL(String imagenURL) {
         OCRspaceDTO rta = proxy.hacerPedidoAOCRSpace(imagenURL);

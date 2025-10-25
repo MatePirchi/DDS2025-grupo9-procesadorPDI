@@ -49,9 +49,7 @@ public class PdIController {
     @PostMapping
     public ResponseEntity<PDIDTO> procesarNuevoPdi(@RequestBody PDIDTO req) {
         System.out.println("ProcesadorPdI ← Fuentes (req DTO): " + req);
-        if(req.id() == null || req.hechoId() == null){
-            return ResponseEntity.badRequest().body( new PDIDTO(null, "El id y hechoId del PDI deben tener algun valor"));
-        }
+        
         PDIDTO entrada = new PDIDTO(
                 req.id(),
                 req.hechoId(),
@@ -76,12 +74,4 @@ public class PdIController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/prueba")
-    public ResponseEntity<List<String>> pruebaApiLayer(@RequestBody PDIDTO bod){
-
-        EtiquetadorAPILayer etiquetadorAPILayer = new EtiquetadorAPILayer();
-        List<String> algo = etiquetadorAPILayer.obtenerEtiquetas(bod.hechoId());
-        return ResponseEntity.ok(algo);
-
-    }
 }

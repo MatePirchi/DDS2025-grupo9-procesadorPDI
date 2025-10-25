@@ -12,9 +12,14 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 public class Procesador {
-    private final List<ServicioProcesamiento> servicios = List.of(
-            new AnalizadorOCRSpace(), new EtiquetadorAPILayer()
-    );
+    private final List<ServicioProcesamiento> servicios;
+
+    public Procesador(AnalizadorOCRSpace analizadorOCRSpace, EtiquetadorAPILayer  etiquetadorAPILayer) {
+        this.servicios = List.of(
+                analizadorOCRSpace,
+                etiquetadorAPILayer
+        );
+    }
 
 
     public void procesar(PdI pdi) {
