@@ -1,7 +1,7 @@
 package ar.edu.utn.dds.k3003.clients;
 
 import ar.edu.utn.dds.k3003.clients.dtos.EtiquetadorAPILayerDTO;
-import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ApiLayerException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import retrofit2.Retrofit;
@@ -27,7 +27,7 @@ public class EtiquetadorAPILayerProxy {
 
     public List<EtiquetadorAPILayerDTO> obtenerEtiquetas(String urlImagen) {
         try {
-            var response = service.getImageLabeling("ZUfYsPoInCZSDCdow7BH5El4IPAzmlBm", urlImagen).execute();
+            var response = service.getImageLabeling("MpSiHIaOGSFv29KNHJeys2uyouuHSt5H", urlImagen).execute();
             if (!response.isSuccessful()) {
                 // Check error body for "no labels found" message
                 String errorMessage = "";
@@ -50,15 +50,15 @@ public class EtiquetadorAPILayerProxy {
                     return List.of(); // Return empty list when no labels found
                 }
                 
-                throw new ComunicacionExternaException("Respuesta de ApiLayer no Exitosa: " + response.message() + " - " + errorMessage);
+                throw new ApiLayerException("Respuesta de ApiLayer no Exitosa: " + response.message() + " - " + errorMessage);
             }
             if (response.body() == null) {
-                throw new ComunicacionExternaException("Cuerpo de Respuesta de ApiLayer vacio");
+                throw new ApiLayerException("Cuerpo de Respuesta de ApiLayer vacio");
             }
             return response.body();
         }
         catch (Exception e) {
-            throw new ComunicacionExternaException("Fallo en la comunicacion con APILayer:" + e.getMessage());
+            throw new ApiLayerException("Fallo en la comunicacion con APILayer:" + e.getMessage());
         }
     }
 }

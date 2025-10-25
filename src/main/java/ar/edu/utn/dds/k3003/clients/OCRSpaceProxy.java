@@ -2,6 +2,7 @@ package ar.edu.utn.dds.k3003.clients;
 
 import ar.edu.utn.dds.k3003.clients.dtos.OCRspaceDTO;
 import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ComunicacionExternaException;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.OCRspaceException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -32,7 +33,7 @@ public class OCRSpaceProxy  {
             return response.body();
         }
         catch ( Exception e){
-            throw new ComunicacionExternaException("Fallo en la comunicacion con OCRSpace: " + e.getMessage());
+            throw new OCRspaceException("Fallo en la comunicacion con OCRSpace: " + e.getMessage());
         }
 
     }

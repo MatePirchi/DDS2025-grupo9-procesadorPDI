@@ -1,4 +1,6 @@
 package ar.edu.utn.dds.k3003.analizadores;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.ApiLayerException;
+import ar.edu.utn.dds.k3003.exceptions.comunicacionexterna.OCRspaceException;
 import ar.edu.utn.dds.k3003.model.PdI;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -37,7 +39,20 @@ public class Procesador {
 
     @Async("taskExecutor")  // Ejecuta en hilo separado
     public CompletableFuture<List<String>> realizarProceso(String urlImagen, ServicioProcesamiento servicio) {
-        List<String> resultado = servicio.procesar(urlImagen);
-        return CompletableFuture.completedFuture(resultado);
+        try {
+            List<String> resultado = servicio.procesar(urlImagen);
+            return CompletableFuture.completedFuture(resultado);
+
+        } catch (OCRspaceException e){
+            System.out.println("Error con OCRspace con url: " + urlImagen);
+            return CompletableFuture.completedFuture(List.of(""));
+        }catch (ApiLayerException e){
+            System.out.println("Error con ApiLayer con url: " + urlImagen);
+            return CompletableFuture.completedFuture(List.of());
+        }
     }
 }
+/*
+
+
+ */
