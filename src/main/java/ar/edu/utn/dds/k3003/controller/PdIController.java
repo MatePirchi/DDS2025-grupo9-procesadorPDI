@@ -47,7 +47,7 @@ public class PdIController {
     }
 
     @PostMapping
-    public ResponseEntity<PDIDTO> procesarNuevoPdi(@RequestBody PDIDTO req) {
+    public ResponseEntity<String> procesarNuevoPdi(@RequestBody PDIDTO req) {
         System.out.println("ProcesadorPdI ← Fuentes (req DTO): " + req);
         
         PDIDTO entrada = new PDIDTO(
@@ -64,7 +64,7 @@ public class PdIController {
 
         PDIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
         // Procesada OK (nueva o duplicada)
-        return ResponseEntity.ok(procesado);
+        return ResponseEntity.ok("Se ha recibido el PDI correctamente, se ha puesto en la cola de procesamiento");
     }
 
     // DELETE /api/pdis/delete

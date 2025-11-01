@@ -1,12 +1,11 @@
 package ar.edu.utn.dds.k3003.analizadores;
 
-import java.util.List;
+import ar.edu.utn.dds.k3003.model.PdI;
 
 public interface ServicioProcesamiento {
     /**
-     * Procesa una imagen y retorna los resultados como lista de strings.
-     * Para OCR: retorna una lista con el texto extraído.
-     * Para Etiquetador: retorna una lista con las etiquetas detectadas.
+     * Procesa una imagen y realiza los cambios a pdi que debe hacer
+     * Retorna true si no hubo error, false si lo hubo (no se guarda nada)
      */
-    List<String> procesar(String urlImagen);
+    Boolean procesar(String urlImagen, PdI pdi);
 }
