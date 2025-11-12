@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
-import java.util.List;
-
 public class ProcesadorWorkerProxy implements ProcesadorWorker {
 
     private final ProcesadorWorkerClient service;
@@ -25,6 +23,8 @@ public class ProcesadorWorkerProxy implements ProcesadorWorker {
 
     @Override
     public PDIDTO procesar(PDIDTO pdidto) {
+
+
         return null;
     }
 }

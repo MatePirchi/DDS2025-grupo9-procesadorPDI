@@ -1,7 +1,4 @@
 package ar.edu.utn.dds.k3003.controller;
-
-
-import ar.edu.utn.dds.k3003.analizadores.*;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 
@@ -65,6 +62,12 @@ public class PdIController {
         PDIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
         // Procesada OK (nueva o duplicada)
         return ResponseEntity.ok("Se ha recibido el PDI correctamente, se ha puesto en la cola de procesamiento");
+    }
+
+    @PostMapping("/worker")
+    public ResponseEntity<String> guardarNuevoWorker(@RequestHeader String key, @RequestBody PDIDTO req) {
+
+        return ResponseEntity.ok("OK");
     }
 
     // DELETE /api/pdis/delete

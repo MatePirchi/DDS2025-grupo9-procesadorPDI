@@ -113,22 +113,3 @@ public class Procesador {
         }
     }
 }
-/* Solucion anterior, mucho acoplamiento
-    @Async("taskExecutor")  // Ejecuta en hilo separado
-    public CompletableFuture<List<String>> realizarProceso(String urlImagen, ServicioProcesamiento servicio) {
-        try {
-            List<String> resultado = servicio.procesar(urlImagen);
-            return CompletableFuture.completedFuture(resultado);
-
-        } catch (OCRspaceException e){
-            System.out.println("Error con OCRspace con url: " + urlImagen);
-            return CompletableFuture.completedFuture(List.of(""));
-        }catch (ApiLayerException e){
-            System.out.println("Error con ApiLayer con url: " + urlImagen);
-            return CompletableFuture.completedFuture(List.of());
-        }
-    }
-}
-
-
- */

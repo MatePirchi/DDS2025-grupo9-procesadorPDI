@@ -1,7 +1,23 @@
 package ar.edu.utn.dds.k3003.analizadores;
 
-public record InstProcWorker(ProcesadorWorker worker, boolean ocupado) {
+public class InstProcWorker {
+    private final ProcesadorWorker worker;
+    private boolean ocupado;
+
     public InstProcWorker(ProcesadorWorker worker) {
-        this(worker, false);
+        this.worker = worker;
+        this.ocupado = false;
+    }
+
+    public ProcesadorWorker worker() {
+        return worker;
+    }
+
+    public boolean ocupado() {
+        return ocupado;
+    }
+
+    public synchronized void setOcupado(boolean ocupado) {
+        this.ocupado = ocupado;
     }
 }
