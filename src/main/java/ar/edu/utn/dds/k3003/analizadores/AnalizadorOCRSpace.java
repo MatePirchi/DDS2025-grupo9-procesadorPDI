@@ -14,7 +14,7 @@ public class AnalizadorOCRSpace implements AnalizadorOCR {
 
     OCRSpaceProxy proxy;
 
-    public AnalizadorOCRSpace(@Value("${apilayer.apikey}") String apiKey) {
+    public AnalizadorOCRSpace(@Value("${ocrspace.apikey}") String apiKey) {
         this.proxy = new OCRSpaceProxy(new ObjectMapper(), apiKey);
     }
     @Override
