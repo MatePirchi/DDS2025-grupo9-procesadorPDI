@@ -1,15 +1,16 @@
-package ar.edu.utn.dds.k3003.analizadores;
+package ar.edu.utn.dds.k3003.manejoWorkers;
 import ar.edu.utn.dds.k3003.clients.ProcesadorWorkerProxy;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.model.PdI;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-
+@Service
 public class ProcesadorMaster {
     private final List<InstProcWorker> workers;
     private final BlockingQueue<PDIDTO> queue;
@@ -36,7 +37,7 @@ public class ProcesadorMaster {
         System.out.println("Worker agregado: "+ baseURL + " (Total disponibles: " + workersSemaphore.availablePermits() + ")");
     }
 
-    public CompletableFuture<PDIDTO> mandar_a_procesar_pdi(PdI pdi){
+    public void mandar_a_procesar_pdi(PdI pdi){
         PDIDTO pdiDTO = convertirADTO(pdi);
         
         // Intentar adquirir un worker sin bloquear (tryAcquire)
@@ -44,9 +45,9 @@ public class ProcesadorMaster {
             // Hay un worker disponible
             Optional<InstProcWorker> workerDisponible = encontrarWorkerDisponible();
             if (workerDisponible.isPresent()) {
-                return procesarConWorker(workerDisponible.get(), pdiDTO);
+                return;
             } else {
-                // No debería pasar, pero por seguridad liberamos el semáforo
+                System.out.println("Se paso el acquire de worker, sin embargo no se encontro worker libre");
                 workersSemaphore.release();
             }
         }
@@ -56,7 +57,6 @@ public class ProcesadorMaster {
         if(!queue.offer(pdiDTO)){
             throw new RuntimeException("No se pudo agregar pdi a cola de procesamiento");
         }
-        return CompletableFuture.completedFuture(pdiDTO);
     }
 
     private synchronized Optional<InstProcWorker> encontrarWorkerDisponible() {
@@ -65,10 +65,10 @@ public class ProcesadorMaster {
                 .findFirst();
     }
 
-    private CompletableFuture<PDIDTO> procesarConWorker(InstProcWorker worker, PDIDTO pdiDTO) {
+    private void procesarConWorker(InstProcWorker worker, PDIDTO pdiDTO) {
         worker.setOcupado(true);
         
-        return CompletableFuture.supplyAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
             try {
                 System.out.println("Procesando PDI " + pdiDTO.id() + " con worker");
                 PDIDTO resultado = worker.worker().procesar(pdiDTO);
@@ -85,10 +85,6 @@ public class ProcesadorMaster {
         }, executorService);
     }
 
-    /**
-     * Procesa PDIs de la cola usando semáforo para sincronización.
-     * El semáforo bloquea automáticamente cuando no hay workers disponibles.
-     */
     private void procesarColaConSemaforo() {
         while (running) {
             try {

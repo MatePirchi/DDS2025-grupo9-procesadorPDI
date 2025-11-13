@@ -1,6 +1,6 @@
 package ar.edu.utn.dds.k3003.app;
 
-import ar.edu.utn.dds.k3003.analizadores.*;
+import ar.edu.utn.dds.k3003.manejoWorkers.*;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInactivoException;
 import ar.edu.utn.dds.k3003.exceptions.domain.pdi.HechoInexistenteException;
@@ -29,7 +29,7 @@ public class Fachada implements FachadaProcesadorPDI {
     @Autowired
     private MetricsConfig metrics;
     @Autowired
-    private Procesador procesador;
+    private ProcesadorMaster procesador;
 
     protected Fachada() {
         this.pdiRepository = new InMemoryPdIRepo();
@@ -69,7 +69,7 @@ public class Fachada implements FachadaProcesadorPDI {
         System.out.println("ProcesadorPdI.Fachada.procesar() mapeado a entidad: " + nuevoPdI);
 
         //Es asincronico, retorna inmediatamente
-        procesador.procesar(nuevoPdI, this.pdiRepository);
+        procesador.mandar_a_procesar_pdi(nuevoPdI);
         return null;
     }
     @Override

@@ -1,4 +1,4 @@
-package ar.edu.utn.dds.k3003.analizadores;
+package ar.edu.utn.dds.k3003.manejoWorkers;
 
 public class InstProcWorker {
     private final ProcesadorWorker worker;

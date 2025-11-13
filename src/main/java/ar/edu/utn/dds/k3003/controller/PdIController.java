@@ -1,4 +1,5 @@
 package ar.edu.utn.dds.k3003.controller;
+import ar.edu.utn.dds.k3003.manejoWorkers.ProcesadorMaster;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 
@@ -15,9 +16,12 @@ public class PdIController {
 
     private final FachadaProcesadorPDI fachadaProcesadorPdI;
 
+    private final ProcesadorMaster procesadorMaster;
+
     @Autowired
-    public PdIController(FachadaProcesadorPDI fachadaProcesadorPdI) {
+    public PdIController(FachadaProcesadorPDI fachadaProcesadorPdI, ProcesadorMaster procesadorMaster) {
         this.fachadaProcesadorPdI = fachadaProcesadorPdI;
+        this.procesadorMaster = procesadorMaster;
     }
 
     @GetMapping
@@ -59,15 +63,18 @@ public class PdIController {
         );
         System.out.println("ProcesadorPdI mapea a PdIDTO: " + entrada);
 
-        PDIDTO procesado = fachadaProcesadorPdI.procesar(entrada);
+        fachadaProcesadorPdI.procesar(entrada);
         // Procesada OK (nueva o duplicada)
         return ResponseEntity.ok("Se ha recibido el PDI correctamente, se ha puesto en la cola de procesamiento");
     }
 
     @PostMapping("/worker")
-    public ResponseEntity<String> guardarNuevoWorker(@RequestHeader String key, @RequestBody PDIDTO req) {
-
-        return ResponseEntity.ok("OK");
+    public ResponseEntity<String> guardarNuevoWorker(@RequestBody String req) {
+        if (req == null) {
+            return ResponseEntity.badRequest().body("url no puede ser vacia");
+        }
+        procesadorMaster.agregarWorker(req);
+        return ResponseEntity.ok("Registrado Correctamente");
     }
 
     // DELETE /api/pdis/delete
