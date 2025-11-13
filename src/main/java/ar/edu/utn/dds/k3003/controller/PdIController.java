@@ -1,6 +1,7 @@
 package ar.edu.utn.dds.k3003.controller;
 import ar.edu.utn.dds.k3003.manejoWorkers.ProcesadorMaster;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
+import ar.edu.utn.dds.k3003.clients.dtos.WorkerUrlDTO;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,12 +70,13 @@ public class PdIController {
     }
 
     @PostMapping("/worker")
-    public ResponseEntity<String> guardarNuevoWorker(@RequestBody String req) {
-        if (req == null) {
-            return ResponseEntity.badRequest().body("url no puede ser vacia");
+    public ResponseEntity<Void> guardarNuevoWorker(@RequestBody WorkerUrlDTO req) {
+        System.out.println("Me llego un nuevo worker desde: " + req.url());
+        if (req.url() == null || req.url().isBlank()) {
+            return ResponseEntity.badRequest().build();
         }
-        procesadorMaster.agregarWorker(req);
-        return ResponseEntity.ok("Registrado Correctamente");
+        procesadorMaster.agregarWorker(req.url());
+        return ResponseEntity.ok().build();
     }
 
     // DELETE /api/pdis/delete
