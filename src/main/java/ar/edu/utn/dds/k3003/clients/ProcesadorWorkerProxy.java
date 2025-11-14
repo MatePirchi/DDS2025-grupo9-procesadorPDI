@@ -3,6 +3,7 @@ package ar.edu.utn.dds.k3003.clients;
 import ar.edu.utn.dds.k3003.manejoWorkers.ProcesadorWorker;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
@@ -12,9 +13,12 @@ import java.net.ConnectException;
 public class ProcesadorWorkerProxy implements ProcesadorWorker {
 
     private final ProcesadorWorkerClient service;
+    @Getter
+    private final String baseURL;
 
     public ProcesadorWorkerProxy(ObjectMapper objectMapper, String baseURL) {
-
+        this.baseURL = baseURL;
+        
         var retrofit =
                 new Retrofit.Builder()
                         .baseUrl(baseURL)

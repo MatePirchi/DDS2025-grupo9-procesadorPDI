@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 
 @RestController
@@ -77,6 +78,24 @@ public class PdIController {
         }
         procesadorMaster.agregarWorker(req.url());
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/worker")
+    public ResponseEntity<String> eliminarWorker(@RequestBody WorkerUrlDTO req) {
+        System.out.println("Me llego un nuevo worker desde: " + req.url());
+        if (req.url() == null || req.url().isBlank()) {
+            return ResponseEntity.badRequest().body("Debe especificar el url");
+        }
+        try {
+            procesadorMaster.borrarWorker(req.url());
+        }
+        catch (NoSuchElementException e) {
+            return ResponseEntity.badRequest().body("No existe, o no se encuentra, un worker de este url");
+        }
+        catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+        return ResponseEntity.ok().body("Worker de url: "+ req.url() + "marcado para borrar");
     }
 
     // DELETE /api/pdis/delete

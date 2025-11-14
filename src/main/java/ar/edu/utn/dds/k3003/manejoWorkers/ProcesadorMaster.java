@@ -7,24 +7,27 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.*;
 
 @Service
 public class ProcesadorMaster {
     private final List<InstProcWorker> workers;
-    private final BlockingQueue<PDIDTO> queue;
+    private final List<PDIDTO> queue; // Cambiado a ArrayList
     private final ExecutorService executorService;
     private final ExecutorService procesadorColaExecutor;
     private final Semaphore workersSemaphore; // Semáforo para controlar workers disponibles
+    private final Semaphore queueSemaphore; // Semáforo para controlar items en cola
     private volatile boolean running;
 
     public ProcesadorMaster() {
         this.workers = new ArrayList<>();
-        this.queue = new LinkedBlockingQueue<>();
+        this.queue = new ArrayList<>(); // Inicializar como ArrayList
         this.executorService = Executors.newCachedThreadPool();
         this.procesadorColaExecutor = Executors.newSingleThreadExecutor();
         this.workersSemaphore = new Semaphore(0); // Inicialmente sin permisos
+        this.queueSemaphore = new Semaphore(0); // Inicialmente sin items en cola
         this.running = true;
         
         // Iniciar el procesador de cola en un hilo dedicado
@@ -42,7 +45,6 @@ public class ProcesadorMaster {
         
         // Intentar adquirir un worker sin bloquear (tryAcquire)
         if (workersSemaphore.tryAcquire()) {
-            // Hay un worker disponible
             Optional<InstProcWorker> workerDisponible = encontrarWorkerDisponible();
             if (workerDisponible.isPresent()) {
                 return;
@@ -54,8 +56,9 @@ public class ProcesadorMaster {
         
         // Si no hay workers disponibles, encolar
         System.out.println("No hay workers disponibles. Encolando PDI: " + pdiDTO.id());
-        if(!queue.offer(pdiDTO)){
-            throw new RuntimeException("No se pudo agregar pdi a cola de procesamiento");
+        synchronized (queue) {
+            queue.add(pdiDTO);
+            queueSemaphore.release(); // Señalizar que hay un item en cola
         }
     }
 
@@ -86,34 +89,49 @@ public class ProcesadorMaster {
     }
 
     private void procesarColaConSemaforo() {
+        PDIDTO pdiDTO;
         while (running) {
             try {
-                // Esperar hasta 500ms por un PDI de la cola
-                PDIDTO pdiDTO = queue.poll(500, TimeUnit.MILLISECONDS);
-                
-                if (pdiDTO != null) {
-                    System.out.println("PDI en cola detectado: " + pdiDTO.id() + ". Esperando worker disponible...");
-                    
-                    // Esperar hasta que haya un worker disponible (bloquea si no hay)
-                    workersSemaphore.acquire();
-                    
-                    // Ahora hay un worker disponible garantizado
-                    Optional<InstProcWorker> workerDisponible = encontrarWorkerDisponible();
-                    
-                    if (workerDisponible.isPresent()) {
-                        System.out.println("Procesando PDI de la cola: " + pdiDTO.id());
-                        procesarConWorker(workerDisponible.get(), pdiDTO);
+                queueSemaphore.acquire();
+
+                synchronized (queue) {
+                    if (!queue.isEmpty()) {
+                        pdiDTO = queue.remove(0); // Extraer el primero
                     } else {
                         // No debería pasar, pero liberamos el semáforo por seguridad
-                        System.out.println("Se paso el acquire de worker, sin embargo no se encontro worker libre");
-                        workersSemaphore.release();
-                        if (queue.offer(pdiDTO)){
-                            throw new RuntimeException("No se pudo agregar pdi a cola de procesamiento");
-                        }
-
-
+                        continue;
                     }
                 }
+
+                System.out.println("PDI en cola detectado: " + pdiDTO.id() + ". Esperando worker disponible...");
+
+                // Esperar hasta que haya un worker disponible (bloquea si no hay)
+                workersSemaphore.acquire();
+
+                // Ahora hay un worker disponible garantizado
+                Optional<InstProcWorker> workerDisponible = encontrarWorkerDisponible();
+
+                if (workerDisponible.isPresent()) {
+                    if(workerDisponible.get().aBorrar()) { //Si el worker esta marcado como a borrar, se borra y se busca otro
+                        workers.remove(workerDisponible.get());
+                        synchronized (queue) {
+                            queue.add(pdiDTO);
+                        }
+                        queueSemaphore.release();
+                        continue;
+                    }
+                    System.out.println("Procesando PDI de la cola: " + pdiDTO.id());
+                    procesarConWorker(workerDisponible.get(), pdiDTO);
+                } else {
+                    // No debería pasar, pero liberamos el semáforo y re-encolamos
+                    System.out.println("Se paso el acquire de worker, sin embargo no se encontro worker libre");
+                    workersSemaphore.release();
+                    synchronized (queue) {
+                        queue.add(pdiDTO);
+                        queueSemaphore.release();
+                    }
+                }
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 System.out.println("Procesador de cola interrumpido");
@@ -152,5 +170,29 @@ public class ProcesadorMaster {
             executorService.shutdownNow();
             Thread.currentThread().interrupt();
         }
+    }
+    public synchronized void borrarWorker(String url) {
+        // Buscar el worker por URL
+        Optional<InstProcWorker> workerAEliminar = workers.stream()
+                .filter(w -> w.getUrl().equals(url))
+                .findFirst();
+        if (workerAEliminar.isPresent()) {
+            InstProcWorker worker = workerAEliminar.get();
+            worker.setABorrar(true);
+
+            // Verificar si el worker está ocupado
+            if (worker.ocupado()) {
+                return;
+            }
+            workers.remove(worker);
+            if (workersSemaphore.tryAcquire()) {
+                System.out.println("Worker eliminado: " + url + " (Total disponibles: " + workersSemaphore.availablePermits() + ")");
+            } else {
+                System.out.println("Worker eliminado: " + url + " (pero semáforo ya estaba en 0)");
+            }
+            return;
+        }
+        System.out.println("Worker no encontrado: " + url);
+        throw new NoSuchElementException("Worker no encontrado: " + url);
     }
 }
