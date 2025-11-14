@@ -38,4 +38,8 @@ public class MetricsConfig {
         System.out.println("Incrementing erroresAprobacion counter");
         incrementCounter("app.erroresAprobacion.total");
     }
+    public void incErrorServicioExterno(){
+        System.out.println("Incrementing errorServicioExterno counter");
+        incrementCounter("app.errorServicioExterno.total");
+    }
 }
