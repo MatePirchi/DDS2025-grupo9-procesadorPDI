@@ -1,7 +1,6 @@
 package ar.edu.utn.dds.k3003.controller;
-import ar.edu.utn.dds.k3003.manejoWorkers.ProcesadorMaster;
+import ar.edu.utn.dds.k3003.manejoWorkers.ProcesadorCola;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
-import ar.edu.utn.dds.k3003.clients.dtos.WorkerUrlDTO;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 
 @RestController
@@ -18,12 +16,9 @@ public class PdIController {
 
     private final FachadaProcesadorPDI fachadaProcesadorPdI;
 
-    private final ProcesadorMaster procesadorMaster;
-
     @Autowired
-    public PdIController(FachadaProcesadorPDI fachadaProcesadorPdI, ProcesadorMaster procesadorMaster) {
+    public PdIController(FachadaProcesadorPDI fachadaProcesadorPdI) {
         this.fachadaProcesadorPdI = fachadaProcesadorPdI;
-        this.procesadorMaster = procesadorMaster;
     }
 
     @GetMapping
@@ -50,7 +45,7 @@ public class PdIController {
     }
 
     @PostMapping
-    public ResponseEntity<String> procesarNuevoPdi(@RequestBody PDIDTO req) {
+    public ResponseEntity<Void> procesarNuevoPdi(@RequestBody PDIDTO req) {
         System.out.println("ProcesadorPdI ← Fuentes (req DTO): " + req);
         
         PDIDTO entrada = new PDIDTO(
@@ -67,35 +62,7 @@ public class PdIController {
 
         fachadaProcesadorPdI.procesar(entrada);
         // Procesada OK (nueva o duplicada)
-        return ResponseEntity.ok("Se ha recibido el PDI correctamente, se ha puesto en la cola de procesamiento");
-    }
-
-    @PostMapping("/worker")
-    public ResponseEntity<Void> guardarNuevoWorker(@RequestBody WorkerUrlDTO req) {
-        System.out.println("Me llego un nuevo worker desde: " + req.url());
-        if (req.url() == null || req.url().isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        procesadorMaster.agregarWorker(req.url());
         return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/worker")
-    public ResponseEntity<String> eliminarWorker(@RequestBody WorkerUrlDTO req) {
-        System.out.println("Me llego un nuevo worker desde: " + req.url());
-        if (req.url() == null || req.url().isBlank()) {
-            return ResponseEntity.badRequest().body("Debe especificar el url");
-        }
-        try {
-            procesadorMaster.borrarWorker(req.url());
-        }
-        catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body("No existe, o no se encuentra, un worker de este url");
-        }
-        catch (Exception e) {
-            return ResponseEntity.internalServerError().body(e.getMessage());
-        }
-        return ResponseEntity.ok().body("Worker de url: "+ req.url() + "marcado para borrar");
     }
 
     // DELETE /api/pdis/delete
