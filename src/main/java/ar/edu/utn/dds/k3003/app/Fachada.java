@@ -29,7 +29,7 @@ public class Fachada implements FachadaProcesadorPDI {
     @Autowired
     private MetricsConfig metrics;
     @Autowired
-    private ProcesadorMaster procesador;
+    private ProcesadorCola procesador;
 
     protected Fachada() {
         this.pdiRepository = new InMemoryPdIRepo();
@@ -65,11 +65,8 @@ public class Fachada implements FachadaProcesadorPDI {
             throw new HechoInactivoException(hechoId);
         }
 
-        PdI nuevoPdI = recibirPdIDTO(pdiDTORecibido);
-        System.out.println("ProcesadorPdI.Fachada.procesar() mapeado a entidad: " + nuevoPdI);
-
         //Es asincronico, retorna inmediatamente
-        procesador.mandar_a_procesar_pdi(nuevoPdI);
+        procesador.encolarPDI(pdiDTORecibido);
         return null;
     }
     @Override
