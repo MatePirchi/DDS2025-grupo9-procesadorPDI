@@ -1,5 +1,5 @@
 package ar.edu.utn.dds.k3003.controller;
-import ar.edu.utn.dds.k3003.manejoWorkers.ProcesadorCola;
+import ar.edu.utn.dds.k3003.config.MetricsConfig;
 import ar.edu.utn.dds.k3003.clients.dtos.PDIDTO;
 import ar.edu.utn.dds.k3003.facades.FachadaProcesadorPDI;
 
@@ -13,7 +13,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pdis")
 public class PdIController {
-
+    @Autowired
+    private MetricsConfig metrics;
     private final FachadaProcesadorPDI fachadaProcesadorPdI;
 
     @Autowired
@@ -24,10 +25,10 @@ public class PdIController {
     @GetMapping
     public ResponseEntity<List<PDIDTO>> listarPdisPorHecho(
             @RequestParam(name = "hecho", required = false) String hechoId) {
-
         List<PDIDTO> lista = (hechoId != null)
                 ? fachadaProcesadorPdI.buscarPorHecho(hechoId)
                 : fachadaProcesadorPdI.pdis();
+        metrics.incConsulta();
         return ResponseEntity.ok(lista);
 
     }
